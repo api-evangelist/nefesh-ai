@@ -1,0 +1,5 @@
+Contact: mailto:security@nefesh.ai
+Preferred-Languages: en, de
+Canonical: https://nefesh.ai/.well-known/security.txt
+Policy: https://nefesh.ai/terms
+Expires: 2027-04-01T00:00:00.000Z

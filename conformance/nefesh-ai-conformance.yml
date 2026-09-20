@@ -1,0 +1,104 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs
+docs:
+- https://nefesh.ai/docs/mcp
+- https://nefesh.ai/docs/a2a
+- https://nefesh.ai/docs/hsp
+- https://nefesh.ai/docs/regulatory
+- https://nefesh.ai/.well-known/security.txt
+note: >-
+  No OpenAPI exists, so nothing here is derived from securitySchemes or response media types; each entry is a
+  docs claim checked against a live probe, or a live probe alone. Certifications: none published (SOC 2 "in
+  progress"); GDPR/BIPA/HIPAA appear as statements, recorded in regulatory/nefesh-ai-regulatory-posture.yml.
+standards:
+- id: mcp-streamable-http
+  name: Model Context Protocol — Streamable HTTP transport
+  conforms: true
+  version: '2025-06-18'
+  evidence: 'POST https://mcp.nefesh.ai/mcp initialize → 200 text/event-stream with protocolVersion 2025-06-18, Mcp-Session-Id header, serverInfo {nefesh, 1.26.0}; tools/list → 6 tools with JSON Schema inputSchema; resources/list and prompts/list → empty; GET /mcp → 406 without SSE Accept (spec-conformant). Probed 2026-09-19.'
+- id: mcp-registry-server-json
+  name: MCP Registry server.json (schema 2025-12-11)
+  conforms: true
+  evidence: 'registry.modelcontextprotocol.io/v0/servers?search=nefesh returns ai.nefesh/human-state v4.0.0 (isLatest, active, published 2026-04-03) with remotes[0] streamable-http https://mcp.nefesh.ai/mcp and the X-Nefesh-Key header declared isSecret; server.json is committed in github.com/nefesh-ai/nefesh-mcp-server.'
+- id: a2a-agent-card
+  name: A2A Agent Card discovery (RFC 8615 path)
+  conforms: partial
+  grade: flavored
+  evidence: 'https://mcp.nefesh.ai/.well-known/agent-card.json → 200 application/json; capabilities is an object and skills an array, but no protocolVersion, non-spec schemaVersion/agentVersion/authSchemes. See a2a/nefesh-ai-a2a.yml.'
+- id: a2a-json-rpc
+  name: A2A JSON-RPC 2.0 binding
+  conforms: partial
+  evidence: 'POST https://mcp.nefesh.ai/a2a message/send → JSON-RPC result with a Task (id, contextId, status, artifacts, history); tasks/get → -32602 for unknown id; unknown methods → -32601. Auth failure is returned as a COMPLETED task with an error artifact rather than a JSON-RPC error or HTTP 401 — non-standard.'
+- id: json-rpc-2.0
+  conforms: true
+  evidence: Both /mcp and /a2a answer with well-formed jsonrpc "2.0" envelopes and standard error codes (-32600, -32601, -32602).
+- id: rfc9116-security-txt
+  conforms: true
+  evidence: 'https://nefesh.ai/.well-known/security.txt → 200 text/plain with Contact, Canonical, Policy, Preferred-Languages and Expires (2027-04-01). Saved to well-known/nefesh-ai-security.txt.'
+- id: llms-txt
+  conforms: true
+  evidence: 'https://nefesh.ai/llms.txt → 200 text/plain, 14.4 KB, H1 + blockquote + H2 sections with linked pages. Saved to llms/nefesh-ai-llms.txt.'
+- id: json-schema-2020-12
+  conforms: true
+  evidence: 'Human State Protocol schema declares $schema https://json-schema.org/draft/2020-12/schema and $id https://nefesh.ai/schemas/hsp-1.0.schema.json (the $id URL itself 404s; the schema is served from GitHub). Saved to json-schema/nefesh-ai-hsp-1.0.schema.json.'
+- id: openapi
+  conforms: false
+  evidence: 'No OpenAPI/Swagger on nefesh.ai, api.nefesh.ai, mcp.nefesh.ai or gateway.nefesh.ai (/openapi.json, /openapi.yaml, /swagger.json, /v1/openapi.json, /api-docs, /redoc, /docs all 404 or a hand-written HTML page); none in the GitHub org.'
+- id: asyncapi
+  conforms: false
+  evidence: No AsyncAPI; webhooks documented in prose only (asyncapi/nefesh-ai-webhooks.yml).
+- id: oauth2
+  conforms: false
+  evidence: API-key header only; no /.well-known/oauth-authorization-server or oauth-protected-resource on any of six hosts.
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration 404 on every host.
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: 'Errors are FastAPI {"detail": ...} application/json.'
+- id: rfc9727-api-catalog
+  conforms: false
+  evidence: /.well-known/api-catalog 404 on every host.
+- id: apis-json
+  conforms: false
+  evidence: /apis.json, /.well-known/apis.json and /apis.yml 404 on every host.
+- id: rfc8594-sunset
+  conforms: false
+  evidence: No Sunset/Deprecation headers or policy.
+- id: idempotency-key
+  conforms: false
+  evidence: No idempotency mechanism documented (conventions/nefesh-ai-conventions.yml).
+- id: openai-chat-completions-compat
+  name: OpenAI Chat Completions request/response compatibility (gateway)
+  conforms: claimed
+  evidence: 'https://nefesh.ai/docs/gateway: POST https://gateway.nefesh.ai/v1/chat/completions "Accepts OpenAI format. Works with any LLM backend." Not verifiable without a key; GET /v1/models is 404.'
+- id: anthropic-messages-compat
+  name: Anthropic Messages API passthrough (gateway)
+  conforms: claimed
+  evidence: 'https://nefesh.ai/docs/gateway: POST /v1/messages "forwards natively to api.anthropic.com. No translation ... Prompt caching and extended thinking work." Not verifiable without a key.'
+domain_standards:
+  note: >-
+    REWARD-ONLY check. Nefesh's market (biometric / affective state for AI) has no established interchange standard
+    that the contract could declare — no FHIR, HL7, IEEE 11073 or Open mHealth shape appears in the request or
+    response schema, and the provider does not claim one. Nefesh instead publishes its OWN open format, the Human
+    State Protocol, and implements it; a self-authored spec is recorded but is not credited as an external
+    domain-standard conformance.
+  entries:
+  - id: hsp-1.0
+    name: Human State Protocol 1.0 (first-party, Apache 2.0)
+    conforms: true
+    external: false
+    evidence: 'Response documents match schema/hsp-1.0.schema.json in github.com/nefesh-ai/human-state-protocol (required hsp_version const "1.0", state enum, stress_score 0-100, confidence 0-1, suggested_action enum); the docs/quickstart response examples carry exactly these fields.'
+  - id: fhir
+    conforms: false
+    evidence: Not claimed; not a medical device by design (docs/regulatory).
+  - id: open-mhealth
+    conforms: false
+    evidence: Not claimed; signal field names (heart_rate, rmssd, sdnn, spo2) are bespoke.
+compliance_statements:
+  certifications: []
+  in_progress: [SOC 2]
+  statements: [GDPR / BDSG, BIPA, 'HIPAA (no PHI, no BAA)', 'FDA General Wellness (not SaMD)', 'EU MDR (not a medical device)']
+  source: https://nefesh.ai/docs/regulatory
+  pointer_note: 'The Compliance pointer in apis.yml points at /docs/regulatory and names these as statements, not certifications; no TrustCenter is emitted.'

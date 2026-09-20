@@ -1,0 +1,45 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/terms
+docs:
+- https://nefesh.ai/terms
+- https://nefesh.ai/enterprise
+- https://nefesh.ai/docs/privacy
+versioning:
+  scheme: uri-path
+  current: v1
+  evidence: 'All documented REST routes are /v1/* (ingest, state, history, triggers, devices, subjects); webhooks routes are unversioned (/webhooks/register, /webhooks/retries); gateway routes mirror upstream vendors (/v1/chat/completions, /v1/messages).'
+  policy_url: null
+  note: No versioning policy page exists (/docs/versioning 404). The MCP server reports serverInfo version 1.26.0 while its instructions string says "Version 6.0.0" and the MCP Registry / agent card say 4.0.0 — three version numbers for one server, none tied to a changelog.
+deprecation:
+  policy_url: null
+  sunset_header: false
+  deprecation_header: false
+  note: No deprecation policy, no Sunset/Deprecation headers, nothing marked deprecated. The gateway header X-Nefesh-Session is labelled "Legacy (still supported)" in favour of X-Nefesh-Subject — the only documented supersession.
+changelog:
+  url: null
+  note: No changelog or release-notes page (/changelog, /docs/changelog 404; no GitHub releases surfaced). Not emitted as changelog/.
+status_page:
+  url: null
+  note: 'status.nefesh.ai does not resolve; /status 404. The only liveness surfaces are GET https://api.nefesh.ai/health ({"status":"ok"}) and GET https://gateway.nefesh.ai/health (200).'
+sla:
+  url: https://nefesh.ai/enterprise
+  uptime_target: '99.9%'
+  scope: Enterprise tier only
+  stated:
+  - 'Enterprise SLA — Uptime 99.9% guaranteed; API Response Time <48ms p95; Support Response <4 hours (business days)'
+  - 'Free and Solo tiers carry no SLA; Solo has email support, Free has community & docs support (pricing page)'
+  - 'Service is provided "AS IS" and "AS AVAILABLE" (terms §9)'
+change_notice:
+  pricing: '30 days written notice to the account email (terms §4)'
+data_retention:
+  live_session_state: 20 minutes (auto-delete)
+  session_history: 24 hours
+  trigger_memory_profiles: 'Persistent until deleted via API (docs/privacy); "90-day topic-stress memory" on the api.nefesh.ai/docs index'
+  raw_video_audio: Never stored (edge processing only)
+  source: https://nefesh.ai/docs/privacy
+termination:
+  note: 'Either party may terminate at any time; on termination API access is revoked immediately and remaining session data is deleted per the 20-minute retention policy (terms §12).'
+deprecated_operations: []
+pointers_note: >-
+  No StatusPage or Deprecation pointer is emitted: neither a status page nor a deprecation policy exists.

@@ -1,0 +1,168 @@
+generated: '2026-09-19'
+method: probed
+source: https://mcp.nefesh.ai/.well-known/agent-card.json
+card:
+  file: a2a/nefesh-ai-agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: mcp.nefesh.ai
+  note: >-
+    The card is served from the MCP/A2A host, not the apex. nefesh.ai returns a real 404 (Next.js not-found page,
+    14,902 bytes) for both /.well-known/agent-card.json and /.well-known/agent.json; api.nefesh.ai, gateway.nefesh.ai
+    and sandbox.nefesh.ai return FastAPI {"detail":"Not Found"} 404s for both; mcp.nefesh.ai 404s the legacy
+    /.well-known/agent.json ("Not Found", text/plain). mcp.nefesh.ai/.well-known/agent-card.json is the only card
+    Nefesh serves. Ownership is not in question: the card's provider.organization is "Nefesh AI" with provider.url
+    https://nefesh.ai, its url points at https://mcp.nefesh.ai/a2a on the same host, Nefesh's own llms.txt and
+    /docs/a2a name this exact URL as the Agent Card, and an identical card is committed to github.com/nefesh-ai/nefesh-a2a.
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://mcp.nefesh.ai/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json
+  body_bytes: 4190
+  last_modified: 'Sun, 05 Apr 2026 18:11:20 GMT'
+  etag: '"69d2a5c8-105e"'
+  body_parses_as: JSON object with AgentCard shape (name, url, capabilities, skills, provider, defaultInputModes, defaultOutputModes)
+  corroborating_probes:
+  - url: https://nefesh.ai/.well-known/agent-card.json
+    http_status: 404
+  - url: https://nefesh.ai/.well-known/agent.json
+    http_status: 404
+  - url: https://mcp.nefesh.ai/.well-known/agent.json
+    http_status: 404
+  - url: https://api.nefesh.ai/.well-known/agent-card.json
+    http_status: 404
+  - url: https://gateway.nefesh.ai/.well-known/agent-card.json
+    http_status: 404
+  - url: https://sandbox.nefesh.ai/.well-known/agent-card.json
+    http_status: 404
+  - url: https://mcp.nefesh.ai/a2a
+    http_status: 405
+    note: GET returns 405 Method Not Allowed; the endpoint exists and expects the JSON-RPC POST the card declares.
+  - url: https://mcp.nefesh.ai/a2a
+    method: POST message/send (no credential)
+    http_status: 200
+    note: >-
+      Returns a JSON-RPC result containing a completed Task (id, contextId, status.state completed, artifacts[],
+      history[]) whose single artifact is a data part {"error":"Missing API key. Provide X-Nefesh-Key header or
+      Authorization: Bearer token..."}. The endpoint is a live, callable A2A surface; auth is enforced in-band
+      inside a completed task rather than as a JSON-RPC error or HTTP 401.
+  - url: https://mcp.nefesh.ai/a2a
+    method: POST tasks/get (unknown id)
+    http_status: 200
+    note: 'JSON-RPC error -32602 "Task x not found" — tasks/get is implemented.'
+  - url: https://mcp.nefesh.ai/a2a
+    method: POST agent/getAuthenticatedExtendedCard
+    http_status: 404
+    note: 'JSON-RPC error -32601 Method not found — no extended card.'
+  - url: https://registry.modelcontextprotocol.io/v0/servers?search=nefesh
+    http_status: 200
+    note: The sibling MCP server is published as ai.nefesh/human-state (v4.0.0, isLatest true), matching the card's agentVersion 4.0.0.
+agent_card:
+  name: Nefesh Human State Agent
+  description: >-
+    Provides real-time human physiological state awareness for AI agents. Fuses biometric signals (heart rate, HRV,
+    voice, facial expression, text sentiment) into a unified stress score (0-100) with behavioral adaptation prompts.
+    Includes trigger memory for cross-session psychological context and adaptation effectiveness feedback.
+  schema_version: '1.0'
+  human_readable_id: nefesh/human-state
+  agent_version: 4.0.0
+  url: https://mcp.nefesh.ai/a2a
+  provider:
+    organization: Nefesh AI
+    url: https://nefesh.ai
+  capabilities:
+    streaming: false
+    pushNotifications: false
+    stateTransitionHistory: false
+  default_input_modes: [text/plain, application/json]
+  default_output_modes: [application/json]
+  auth_schemes:
+  - {type: apiKey, in: header, name: X-Nefesh-Key}
+  - {type: http, scheme: bearer}
+  skill_count: 4
+  skills:
+  - id: get-human-state
+    name: Get Human State
+    tags: [biometrics, stress, adaptation]
+  - id: ingest-signals
+    name: Ingest Biometric Signals
+    tags: [biometrics, signals, ingest]
+  - id: get-trigger-memory
+    name: Get Trigger Memory
+    tags: [triggers, psychology, memory]
+  - id: get-session-history
+    name: Get Session History
+    tags: [history, trends]
+  tags: [health, biometrics, stress, adaptation, human-state, mcp-native]
+  icon_url: https://nefesh.ai/icon.png
+  privacy_policy_url: https://nefesh.ai/docs/privacy
+  terms_of_service_url: https://nefesh.ai/terms
+conformance:
+  spec: A2A 1.0.0
+  grade: flavored
+  protocol_version: null
+  preferred_transport: null
+  transport: JSON-RPC 2.0 over HTTPS POST (stated in docs; not declared in the card)
+  hard_checks:
+    capabilities_is_object: true
+    protocol_version_present: false
+    skills_is_array: true
+  optional_fields:
+    default_input_modes: true
+    default_output_modes: true
+    preferred_transport: false
+  grade_basis: >-
+    Two of three hard checks pass — capabilities is an OBJECT (streaming, pushNotifications,
+    stateTransitionHistory as boolean fields) and skills is an ARRAY of four populated skills — but the card carries
+    NO protocolVersion anywhere: not at the top level, and there is no supportedInterfaces[] / additionalInterfaces[]
+    block to carry one. It declares schemaVersion "1.0" and agentVersion "4.0.0" instead, neither of which is an A2A
+    field. A hard-check failure grades the card flavored under the rubric, even though it is a working, honestly
+    described discovery document for a live endpoint. Both optional input/output mode fields are present.
+  deviations:
+  - field: protocolVersion
+    observed: absent
+    note: >-
+      No protocolVersion at the top level and no supportedInterfaces[].protocolVersion. The prose docs say "A2A v1.0"
+      and the card says schemaVersion "1.0", but a reader cannot tell from the card which protocol revision the
+      endpoint speaks.
+  - field: version
+    observed: absent; agentVersion "4.0.0" used instead
+    note: A2A names the agent's version field `version`. agentVersion is not a spec field.
+  - field: schemaVersion / humanReadableId
+    observed: present, non-spec
+    note: Neither key exists in the A2A AgentCard schema (0.2, 0.3 or 1.0). Harmless to a lenient reader; a strict validator rejects them.
+  - field: securitySchemes / security
+    observed: absent; a non-spec `authSchemes` array is used instead
+    note: >-
+      The two auth options (apiKey header X-Nefesh-Key, http bearer) are described in an `authSchemes` array of
+      OpenAPI-style objects. A2A expects a `securitySchemes` map plus a `security` requirements list; an A2A client
+      that reads only spec fields sees an unauthenticated agent and will have every skill call answered with the
+      in-band "Missing API key" artifact.
+  - field: skills[].inputModes / outputModes
+    observed: snake_case `input_modes` / `output_modes`
+    note: Per-skill mode fields are spelled in snake_case, so they are ignored by a camelCase reader; the top-level defaultInputModes/defaultOutputModes are correctly spelled and cover the gap.
+  - field: preferredTransport / supportedInterfaces
+    observed: absent; a bare top-level url is the only interface
+    note: 0.2-era single-url shape. The transport (JSON-RPC) is stated only in the docs and README.
+  - field: documentationUrl
+    observed: absent
+    note: The card carries privacyPolicyUrl and termsOfServiceUrl (neither is an A2A field) but not documentationUrl, which is; https://nefesh.ai/docs/a2a exists.
+  - field: iconUrl
+    observed: https://nefesh.ai/icon.png
+    note: Probed 2026-09-19 — returns 404 (the site serves /icon.svg and /apple-icon instead). A dead link inside the card.
+  - field: skills
+    observed: four skills, each with id, name, description, tags, examples
+    note: Well-populated; the same four capabilities as the authenticated MCP tools (see mcp/nefesh-ai-mcp.yml). The two keyless self-provisioning MCP tools have no A2A counterpart.
+  - field: signatures
+    observed: absent
+    note: No JWS signature block; authenticity rests on TLS to mcp.nefesh.ai.
+surface_relationship:
+  note: >-
+    Nefesh publishes three agent-facing surfaces that are projections of ONE backend capability set — read state,
+    ingest signals, trigger memory, session history. A2A: 4 skills at https://mcp.nefesh.ai/a2a. MCP: 6 tools at
+    https://mcp.nefesh.ai/mcp (the 4 above plus keyless request_api_key / check_api_key_status). REST: the same
+    operations at https://api.nefesh.ai/v1/* plus device registry, webhooks and GDPR deletion that neither agent
+    surface exposes. The /docs/a2a page illustrates calls with a non-A2A `skill/invoke` method; the live endpoint
+    answers that method with -32601 and the README's message/send with a data part is the working form.

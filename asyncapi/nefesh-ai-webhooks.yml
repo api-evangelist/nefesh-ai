@@ -1,0 +1,43 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/webhooks
+docs: https://nefesh.ai/docs/webhooks
+asyncapi_published: false
+asyncapi_note: >-
+  Nefesh publishes NO AsyncAPI document and no OpenAPI with a webhooks object. api.nefesh.ai/asyncapi.yaml was not
+  probed separately because the host returns FastAPI 404 for every non-route path; nothing in the docs, llms.txt or
+  the GitHub org names an AsyncAPI. The event surface below is documented in prose only and captured as published;
+  nothing was fabricated.
+surface: Outbound HTTPS webhook deliveries on human-state transitions
+registration:
+  endpoint: POST https://api.nefesh.ai/webhooks/register
+  auth: X-Nefesh-Key header
+  request_body:
+    url: 'https://your-server.com/nefesh-webhook'
+    events: [state_change]
+    session_id: sess_abc123
+  note: 'Registration is scoped to a session_id in the documented example. The docs mention a webhook secret for signature verification but do not show where it is issued or returned. robots.txt disallows crawling /api/webhooks/ on the apex, which is a different (site) path from api.nefesh.ai/webhooks/.'
+events:
+- name: state_change
+  description: 'User transitions between states (e.g. Focused → Stressed).'
+  payload_example:
+    event: state_change
+    session_id: sess_abc123
+    previous_state: focused
+    new_state: stressed
+    stress_score: 65
+    timestamp: '2026-03-30T14:32:15Z'
+  payload_fields: [event, session_id, previous_state, new_state, stress_score, timestamp]
+event_count: 1
+security:
+  signing: HMAC-SHA256
+  header: X-Nefesh-Signature
+  verification: 'Verify the signature against your webhook secret to ensure the payload was sent by Nefesh.'
+  note: 'The signed content (raw body vs. timestamp-prefixed), the signature encoding and the secret issuance flow are not documented — a consumer cannot implement verification from the docs alone.'
+retries:
+  trigger: non-2xx response
+  policy: exponential backoff
+  schedule: ['1st retry after 1 second', '2nd retry after 4 seconds', '3rd retry after 16 seconds']
+  give_up: 'After 3 failed attempts the webhook is marked as failed.'
+  replay: 'Failed deliveries can be viewed and retried via the /webhooks/retries endpoint (GET without a key returns 401 {"detail":"Missing auth"}, probed 2026-09-19).'
+polling_alternative: 'GET /v1/state?session_id=X, or the MCP resource template nefesh://session/{session_id}/state (live in resources/templates/list; the server advertises resources.subscribe false, so it is a read, not a push — see mcp/nefesh-ai-mcp.yml).'

@@ -1,0 +1,131 @@
+generated: '2026-09-19'
+method: probed
+source: >-
+  Live GET probes of the named /.well-known/* path list on every host the record knows — nefesh.ai, www.nefesh.ai,
+  api.nefesh.ai, mcp.nefesh.ai (the MCP/A2A host), gateway.nefesh.ai and sandbox.nefesh.ai — on 2026-09-19. Every
+  row is a request that was issued; every status is the one returned.
+summary:
+  hosts_probed: 6
+  hosts_answering: 5
+  paths_probed: 77
+  documents_served: 3
+  served:
+  - 'https://nefesh.ai/.well-known/security.txt — RFC 9116 security.txt (Contact, Canonical, Policy, Preferred-Languages, Expires 2027-04-01)'
+  - 'https://mcp.nefesh.ai/.well-known/agent-card.json — A2A Agent Card (captured and graded in a2a/nefesh-ai-a2a.yml)'
+  - 'https://mcp.nefesh.ai/.well-known/mcp.json — non-standard MCP self-description manifest (name, version, transport endpoint, authentication header, tool list with auth_required flags)'
+  absent: >-
+    No OpenID Connect discovery, no RFC 8414 authorization-server metadata, no RFC 9728 protected-resource metadata
+    (including on the MCP host, where it would live), no RFC 9727 api-catalog, no ai-plugin.json, no UCP/ACP/AAuth
+    documents, and no apis.json / apis.yml at the root or under /.well-known/ on any host. Consistent with an
+    API-key-only provider: there is no OAuth surface for the metadata to describe.
+  host_behaviour: >-
+    nefesh.ai (Next.js on Cloudflare) returns a real 404 page for unknown paths — no SPA-shell false positives.
+    api.nefesh.ai, gateway.nefesh.ai and sandbox.nefesh.ai return FastAPI {"detail":"Not Found"} 404s.
+    mcp.nefesh.ai (nginx) returns text/plain "Not Found" 404s. www.nefesh.ai resolves to the same Cloudflare IPs
+    as the apex but every HTTPS request timed out (three attempts, 12-15 s each); http:// 301s to https://www,
+    which then times out — the www host is effectively dead and no document could be read from it.
+pointer_note: >-
+  WellKnown and SecurityTxt pointers are emitted because two real documents were served (security.txt on the apex,
+  agent card + mcp.json on the MCP host); this is a presence, not a recorded absence.
+hosts:
+- host: nefesh.ai
+  role: Website, documentation and llms.txt host (Next.js behind Cloudflare)
+  documents:
+  - {path: /.well-known/security.txt, status: 200, content_type: text/plain, file: nefesh-ai-security.txt, standard: RFC 9116, note: 'Contact mailto:security@nefesh.ai; Policy https://nefesh.ai/terms; Preferred-Languages en, de; Expires 2027-04-01T00:00:00.000Z'}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/api-catalog.json, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/ucp.json, status: 404}
+  - {path: /.well-known/acp.json, status: 404}
+  - {path: /.well-known/aauth-resource.json, status: 404}
+  - {path: /.well-known/apis.json, status: 404}
+  - {path: /apis.json, status: 404}
+  - {path: /apis.yml, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}
+  - {path: /.well-known/mcp.json, status: 404}
+  - {path: /llms.txt, status: 200, content_type: 'text/plain; charset=UTF-8', file: ../llms/nefesh-ai-llms.txt, note: 'Not a /.well-known/ path; recorded here because it is the apex''s only other machine-readable discovery document (14,396 bytes).'}
+  - {path: /robots.txt, status: 200, note: 'Allow: / for all agents, with an explicit allow-list of 18 AI crawlers (GPTBot, ClaudeBot, PerplexityBot, ...); Disallow /api/admin/, /api/webhooks/, /api/portal/, /welcome; Sitemap https://nefesh.ai/sitemap.xml'}
+- host: www.nefesh.ai
+  role: www alias (same Cloudflare IPs as the apex)
+  documents:
+  - {path: /, status: null, note: 'HTTPS connection timed out after 15 s on three separate attempts; http:// answers 301 to https://www.nefesh.ai/ which then times out. No document readable.'}
+  - {path: /.well-known/security.txt, status: null, note: timeout}
+  - {path: /.well-known/agent-card.json, status: null, note: timeout}
+  - {path: /.well-known/agent.json, status: null, note: timeout}
+- host: api.nefesh.ai
+  role: REST API base (FastAPI behind Cloudflare)
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/api-catalog.json, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/ucp.json, status: 404}
+  - {path: /.well-known/acp.json, status: 404}
+  - {path: /.well-known/aauth-resource.json, status: 404}
+  - {path: /.well-known/apis.json, status: 404}
+  - {path: /apis.json, status: 404}
+  - {path: /apis.yml, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}
+  - {path: /.well-known/mcp.json, status: 404}
+  - {path: /.well-known/openapi.json, status: 404}
+- host: mcp.nefesh.ai
+  role: MCP (/mcp) and A2A (/a2a) host (nginx). RFC 9728 protected-resource metadata would live here if Nefesh used OAuth; it does not.
+  documents:
+  - {path: /.well-known/agent-card.json, status: 200, content_type: application/json, file: ../a2a/nefesh-ai-agent-card.json, standard: A2A Agent Card, note: '4,190 bytes; Last-Modified 2026-04-05; Cache-Control public, max-age=3600; graded flavored in a2a/nefesh-ai-a2a.yml'}
+  - {path: /.well-known/agent.json, status: 404}
+  - {path: /.well-known/mcp.json, status: 200, content_type: application/json, file: nefesh-ai-mcp-server-card.json, standard: none (vendor MCP self-description), note: '2,862 bytes; name nefesh, version 6.0.0, transport streamable-http endpoint https://mcp.nefesh.ai/mcp, authentication header X-Nefesh-Key, 6 tools with auth_required flags'}
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/api-catalog.json, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/ucp.json, status: 404}
+  - {path: /.well-known/acp.json, status: 404}
+  - {path: /.well-known/aauth-resource.json, status: 404}
+  - {path: /.well-known/apis.json, status: 404}
+  - {path: /apis.json, status: 404}
+  - {path: /apis.yml, status: 404}
+- host: gateway.nefesh.ai
+  role: Cognitive Compute Router (LLM gateway) base (FastAPI behind Cloudflare)
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/ucp.json, status: 404}
+  - {path: /.well-known/acp.json, status: 404}
+  - {path: /.well-known/aauth-resource.json, status: 404}
+  - {path: /.well-known/apis.json, status: 404}
+  - {path: /apis.json, status: 404}
+  - {path: /apis.yml, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}
+- host: sandbox.nefesh.ai
+  role: Live browser demo host
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/ucp.json, status: 404}
+  - {path: /.well-known/acp.json, status: 404}
+  - {path: /.well-known/aauth-resource.json, status: 404}
+  - {path: /.well-known/apis.json, status: 404}
+  - {path: /apis.json, status: 404}
+  - {path: /apis.yml, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}

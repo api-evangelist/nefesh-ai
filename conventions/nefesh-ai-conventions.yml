@@ -1,0 +1,106 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/api
+docs:
+- https://nefesh.ai/docs/api
+- https://nefesh.ai/docs/v1-ingest
+- https://nefesh.ai/docs/quickstart
+- https://nefesh.ai/docs/gateway
+- https://nefesh.ai/docs/webhooks
+- https://nefesh.ai/docs/privacy
+- https://nefesh.ai/terms
+derived_from: []
+note: No OpenAPI exists; every convention below is stated in the docs or observed on a live unauthenticated response.
+base_url: https://api.nefesh.ai
+media_type: application/json
+auth:
+  style: 'Single API key in the X-Nefesh-Key header on every surface (REST, gateway, MCP header, A2A); A2A also accepts Authorization: Bearer <same key>. No OAuth, no scopes.'
+  detail: authentication/nefesh-ai-authentication.yml
+identifiers:
+  session_id: 'Client-generated, max 256 chars; docs recommend UUIDv7. Identifies one human-device session; live state auto-deletes after 20 minutes.'
+  subject_id: 'Persistent per-user id, required for trigger memory and for the gateway (X-Nefesh-Subject). Terms require it to be pre-hashed (SHA-256) by the customer.'
+  device_id: 'Returned by POST /v1/devices (dev_ prefix in examples); sending device_id on /v1/ingest lets the API resolve the subject so no session management is needed.'
+  request_id: 'None issued; no request-id header on any response.'
+timestamps:
+  format: ISO 8601 (timestamp field required on every ingest)
+  note: '"timestamp too old" is a documented 400 — the docs do not state the window.'
+idempotency:
+  supported: false
+  coverage: none
+  header: null
+  scope: []
+  description: >-
+    No idempotency key, header or replay-protection mechanism is documented on any write (POST /v1/ingest,
+    POST /v1/devices, POST /webhooks/register). Ingest is a time-series append: replaying the same reading adds a
+    second observation to the session history and can shift the fused score. No safe-retry guidance is published.
+pagination:
+  style: none
+  note: 'No list endpoint paginates. GET /v1/history takes a minutes lookback window (default 5, max 60); GET /v1/devices returns the full list; GET /v1/triggers returns the whole profile.'
+filtering_and_expansion:
+  sparse_fields: none
+  expansion: none
+  note: 'Response shape is fixed (the HSP document — see json-schema/nefesh-ai-hsp-1.0.schema.json). adaptation_effectiveness appears automatically from the second call in a session; topics_detected appears when user_message/ai_response were sent.'
+request_limits:
+  body_size: '4 KB max per request → HTTP 413'
+  strings: 'user_message / ai_response max 4096 chars; unknown fields rejected with 422 "Extra inputs are not permitted" (strict schema by design)'
+versioning:
+  style: uri-path /v1
+  detail: lifecycle/nefesh-ai-lifecycle.yml
+error_envelope:
+  shape: 'FastAPI {"detail": string | [{type, loc, msg, input}]}; JSON-RPC 2.0 error objects on /mcp; in-band {"error": ...} artifacts on /a2a and inside MCP tool results'
+  detail: errors/nefesh-ai-problem-types.yml
+rate_limit_signaling:
+  status: 429 on rate limit; 402 on monthly quota
+  headers: none documented and none observed (no RateLimit-*, X-RateLimit-* or Retry-After on probed responses)
+  detail: rate-limits/nefesh-ai-rate-limits.yml
+gateway_response_headers:
+- {name: X-Nefesh-Adapted, values: 'true | false', description: whether biometric context was injected}
+- {name: X-Nefesh-State, values: 'calm | relaxed | focused | stressed | acute_stress'}
+- {name: X-Nefesh-Backend, values: 'anthropic-native | anthropic-passthrough | unified-anthropic', description: routing path used}
+- {name: X-Nefesh-Reason, description: present when X-Nefesh-Adapted is false}
+webhooks:
+  signing: HMAC-SHA256 in X-Nefesh-Signature
+  retries: 'exponential backoff 1 s, 4 s, 16 s; marked failed after 3 attempts; failed deliveries listed/retried via /webhooks/retries'
+  detail: asyncapi/nefesh-ai-webhooks.yml
+dry_run_mode:
+  supported: false
+  status: none
+  note: >-
+    No sandbox mode, test key type or dry-run flag on the API. The published rehearsal tools are outside the
+    request path: the CLI `nefesh simulate --scenario <state>` streams synthetic readings into a REAL session under
+    your key, and sandbox.nefesh.ai is a keyless browser demo. See sandbox/nefesh-ai-sandbox.yml.
+reversibility:
+  status: documented
+  credit_basis: >-
+    Reversal paths exist for stored state (cascading subject deletion, device removal) and are documented with the
+    exact route, but NO window is stated for any of them — deletion is described as immediate/cascading and
+    permanent, and there is no undo, restore or void for an ingested reading. Graded `documented` (reversal path,
+    no stated window), not `verified`.
+  surfaces:
+  - write: POST /v1/ingest (append a reading to a session; may create the session)
+    reversal: none
+    window: null
+    note: 'A reading cannot be retracted individually. The session itself expires (live state 20 min, history 24 h), and DELETE /v1/subjects/{subject_id} removes everything tied to a subject.'
+    docs: https://nefesh.ai/docs/privacy
+  - write: POST /v1/ingest with user_message/ai_response (adds topics to a subject''s trigger memory)
+    reversal: DELETE /v1/subjects/{subject_id}
+    window: null
+    note: 'Trigger memory is "persistent until deleted via API"; deletion is cascading ("sessions_removed": n in the response) and not scoped to a single topic.'
+    docs: https://nefesh.ai/docs/privacy
+  - write: POST /v1/devices (register a device to a subject)
+    reversal: DELETE /v1/devices/{device_id}
+    window: null
+    docs: https://nefesh.ai/llms.txt
+  - write: POST /webhooks/register
+    reversal: undocumented
+    window: null
+    note: 'No unregister/delete route is documented; /webhooks/retries only re-drives failed deliveries.'
+    docs: https://nefesh.ai/docs/webhooks
+  - write: request_api_key (MCP) / signup (key issuance)
+    reversal: 'Key revocation is Nefesh-side only (terms §3); subscription cancellation via the Stripe billing portal, no refunds for partial periods (terms §4)'
+    window: null
+    docs: https://nefesh.ai/terms
+caching:
+  documented: 'Agent card served with Cache-Control: public, max-age=3600 and an ETag; no caching guidance for API responses.'
+cors:
+  observed: 'Access-Control-Allow-Origin: * on mcp.nefesh.ai (/mcp allows Content-Type, X-Nefesh-Key, Mcp-Session-Id, Accept; /a2a allows Content-Type, X-Nefesh-Key, Authorization, Accept).'

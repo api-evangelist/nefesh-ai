@@ -1,0 +1,64 @@
+generated: '2026-09-19'
+method: searched
+source: https://registry.npmjs.org/@nefesh%2Fcli
+docs: https://nefesh.ai/docs/cli
+summary:
+  official_packages: 1
+  client_libraries: 0
+  note: >-
+    Nefesh ships ONE published first-party package, the @nefesh/cli command-line tool. It ships no client library
+    on any registry: the docs index advertises a "JavaScript SDK — nefesh-client for browser and Node.js" and an
+    "Edge rPPG Engine", but /docs/sdk/js and /docs/sdk/rppg both read "Full documentation available soon. Contact
+    us for early access", nefesh-client / @nefesh/client / @nefesh/sdk / @nefesh/rppg do not exist on npm, the
+    github.com/nefesh-ai/nefesh-sdk and nefesh-wearables repos are empty shells, and nefesh / nefesh-ai / nefesh-sdk
+    are absent from PyPI (the unscoped npm `nefesh` is an unrelated 2017 animation library by another author).
+    Because the only official package is a CLI and not an SDK, no SDKs pointer is emitted. The published
+    integration path is plain HTTP (examples repo in curl, Python fetch/requests, JavaScript fetch, Go net/http).
+packages:
+- language: javascript
+  kind: cli
+  registry: npm
+  name: '@nefesh/cli'
+  url: https://www.npmjs.com/package/@nefesh/cli
+  install: npm install -g @nefesh/cli
+  binary: nefesh
+  official: true
+  version: 1.2.0
+  published: '2026-04-03'
+  versions_published: 3
+  license: MIT
+  engines: 'node >=18'
+  repository: https://github.com/nefesh-ai/nefesh-cli
+  publisher: tomstuhl
+  author: 'Tom Stuhl <Tom.Stuhl@nefesh.ai>'
+  registry_metadata: https://registry.npmjs.org/@nefesh%2Fcli
+  note: >-
+    Read from the npm registry document on 2026-09-19. Last release 2026-04-03, five months before this probe; the
+    live MCP server reports serverInfo 1.26.0 and the card agentVersion 4.0.0 (last-modified 2026-04-05), so the CLI
+    predates neither by much. Command surface captured in cli/nefesh-ai-cli.yml.
+announced_not_published:
+- name: nefesh-client
+  language: javascript
+  claimed_at: https://nefesh.ai/docs (SDKs section)
+  docs: https://nefesh.ai/docs/sdk/js
+  registry: npm
+  version: null
+  published: null
+  note: 'Docs page says "Full documentation available soon. Contact us for early access." Not on npm (404 for nefesh-client, @nefesh/client, @nefesh/sdk).'
+- name: Edge rPPG engine
+  language: javascript
+  claimed_at: https://nefesh.ai/docs (SDKs section, "12 KB WebWorker for webcam heart rate")
+  docs: https://nefesh.ai/docs/sdk/rppg
+  registry: null
+  version: null
+  published: null
+  note: 'Docs page says "Full documentation available soon." No registry package and no CDN URL published; the engine runs inside sandbox.nefesh.ai only.'
+registries_probed:
+- {registry: npm, query: '@nefesh/cli', status: 200}
+- {registry: npm, query: 'search text=nefesh', result: '@nefesh/cli (tomstuhl) + unrelated "nefesh" 1.1.20 (2017, and3rsonsousa)'}
+- {registry: npm, query: 'nefesh-client, @nefesh/client, @nefesh/sdk, @nefesh/mcp, @nefesh/mcp-server, @nefesh/rppg, @nefesh/wearables, @nefesh/gateway', status: 404}
+- {registry: pypi, query: 'nefesh, nefesh-ai, nefesh-sdk, nefesh-client', status: 404}
+- {registry: crates.io, query: nefesh, status: 404}
+- {registry: rubygems, query: nefesh, status: 404}
+- {registry: proxy.golang.org, query: github.com/nefesh-ai/nefesh-go, status: 404}
+- {registry: github, query: 'nefesh-ai org — 9 repos: .github, human-state-protocol, nefesh-a2a, nefesh-cli, nefesh-examples, nefesh-gateway, nefesh-mcp-server, nefesh-sdk (empty), nefesh-wearables (empty)'}

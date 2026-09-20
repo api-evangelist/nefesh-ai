@@ -1,0 +1,150 @@
+generated: '2026-09-19'
+method: probed
+status: published
+source: https://mcp.nefesh.ai/mcp
+docs: https://nefesh.ai/docs/mcp
+summary: >-
+  Nefesh runs ONE hosted remote MCP server at https://mcp.nefesh.ai/mcp — Streamable HTTP, protocol revision
+  2025-06-18, stateful (an Mcp-Session-Id is issued on initialize and required on every later call). Anonymous
+  initialize, tools/list, resources/list, prompts/list and resources/templates/list all succeed; six tools are
+  returned with full JSON Schema inputSchemas and are saved verbatim in mcp/nefesh-ai-mcp-tools.json. Two tools
+  (request_api_key, check_api_key_status) work with no credential and let an agent self-provision a free key by
+  email verification; the other four require the X-Nefesh-Key header and, without it, return an in-band error text
+  with isError false. The server is published to the official MCP Registry as ai.nefesh/human-state and also
+  self-describes at https://mcp.nefesh.ai/.well-known/mcp.json. No stdio package exists.
+deployment:
+  mode: remote
+  endpoint: https://mcp.nefesh.ai/mcp
+  auth: api-key
+  verified: probed
+  note: >-
+    A hosted HTTPS endpoint an MCP client POSTs to directly; the docs say "no local installation, no Docker, no
+    stdio" and no npm/PyPI package ships a server (the GitHub repo is a Python proxy with a Dockerfile, not a
+    published stdio distribution). auth is api-key because the data tools need X-Nefesh-Key in the client config's
+    headers block; the transport itself accepts anonymous sessions, and two tools are deliberately keyless so an
+    agent can obtain a key in-band. No OAuth: no /.well-known/oauth-protected-resource or
+    oauth-authorization-server on mcp.nefesh.ai (both 404, probed 2026-09-19).
+server:
+  name: nefesh
+  title: Nefesh — Real-Time Human State Awareness for AI
+  transport: streamable-http
+  url: https://mcp.nefesh.ai/mcp
+  stateful: true
+  session_header: Mcp-Session-Id
+  protocol_version: '2025-06-18'
+  server_version: 1.26.0
+  version_note: 'serverInfo.version is 1.26.0; the initialize instructions string says "Version 6.0.0"; /.well-known/mcp.json says 6.0.0; the MCP Registry entry and agent card say 4.0.0. Four version labels for one server.'
+  instructions: 'Human State Fusion — send any body signal, get a unified state for your LLM. Includes trigger memory for cross-session context. Not a medical device. Version 6.0.0.'
+  capabilities:
+    tools: {listChanged: false}
+    resources: {subscribe: false, listChanged: false}
+    prompts: {listChanged: false}
+    experimental: {}
+  probe:
+    fetched: '2026-09-19'
+    initialize: {http_status: 200, content_type: text/event-stream}
+    initialized_notification: {http_status: 202}
+    tools_list: {http_status: 200, tools: 6, file: mcp/nefesh-ai-mcp-tools.json}
+    tools_list_without_session: {http_status: 400, error: '-32600 Bad Request: Missing session ID'}
+    resources_list: {http_status: 200, resources: 0}
+    resources_templates_list: {http_status: 200, templates: 1}
+    prompts_list: {http_status: 200, prompts: 0}
+    get_mcp: {http_status: 406, note: GET without an SSE Accept header is refused, as the transport spec allows}
+    tools_call_without_key: {http_status: 200, result_text: '{"error": "API returned 401. Check your API key and parameters."}', isError: false}
+  cors: 'Access-Control-Allow-Origin: *; Allow-Headers Content-Type, X-Nefesh-Key, Mcp-Session-Id, Accept'
+authentication:
+  header: X-Nefesh-Key
+  key_prefix: nfsh_
+  anonymous_tools: [request_api_key, check_api_key_status]
+  key_required_tools: [get_human_state, ingest, get_trigger_memory, get_session_history]
+  client_config_example:
+    mcpServers:
+      nefesh:
+        url: https://mcp.nefesh.ai/mcp
+        headers: {X-Nefesh-Key: YOUR_API_KEY}
+  self_provisioning: >-
+    Connect with no key, have the agent ask the user for a real email, call request_api_key(email), poll
+    check_api_key_status(request_id) every 10 s; the user clicks the verification link; the key is returned once
+    and the request expires after 15 minutes. Placeholder and disposable emails are blocked server-side.
+tools:
+- name: get_human_state
+  auth_required: true
+  read_only: true
+  input_schema: {session_id: 'string (required)'}
+  rest_binding: 'GET https://api.nefesh.ai/v1/state?session_id={session_id}'
+  description: 'Get current unified human state for a session: state, stress_score 0-100, confidence, suggested_action, action_reason, adaptation_effectiveness from the 2nd call. Requires a prior ingest.'
+- name: ingest
+  auth_required: true
+  read_only: false
+  input_schema: {session_id: 'string (required)', timestamp: 'string ISO 8601 (required)', signals: '32 optional nullable fields: heart_rate, rmssd, sdnn, spo2, pnn50, mean_ibi, ibi_count, tone, speech_rate, pitch_variability, expression, gaze, posture, engagement, sentiment, urgency, glucose_mg_dl, glucose_mmol_l, glucose_trend, eeg_alpha_power, eeg_beta_power, eeg_theta_power, cognitive_load, eda, skin_temperature, respiratory_rate, steps_last_minute, activity_level, sleep_stage, stress_score, source_device, confidence, subject_id'}
+  rest_binding: 'POST https://api.nefesh.ai/v1/ingest'
+  description: Send biometric signals from any sensor, get unified state back. Include subject_id for cross-session trigger memory.
+  note: 'The MCP inputSchema does NOT expose user_message / ai_response or device_id, which the REST /v1/ingest accepts — trigger-memory topic extraction and device-registry resolution are REST-only through this surface.'
+- name: get_trigger_memory
+  auth_required: true
+  read_only: true
+  input_schema: {subject_id: 'string (required)'}
+  rest_binding: 'GET https://api.nefesh.ai/v1/triggers?subject_id={subject_id}'
+  description: Retrieve the psychological trigger profile for a subject — active vs resolved topics with observation_count, avg_score, peak_score, last_seen.
+- name: get_session_history
+  auth_required: true
+  read_only: true
+  input_schema: {session_id: 'string (required)', minutes: 'integer (default 5, max 60)'}
+  rest_binding: 'GET https://api.nefesh.ai/v1/history?session_id={session_id}&minutes={minutes}'
+  description: Timestamped state history for a session with an overall trend (rising | falling | stable).
+- name: request_api_key
+  auth_required: false
+  read_only: false
+  input_schema: {email: 'string (required)'}
+  rest_binding: undocumented (signup flow)
+  description: Request a free Nefesh API key by email verification. The tool text instructs the agent to ask the user for a real email and never invent one.
+- name: check_api_key_status
+  auth_required: false
+  read_only: true
+  input_schema: {request_id: 'string (required)'}
+  rest_binding: undocumented (signup flow)
+  description: Poll a pending key request every 10 s; returns pending or ready with the key (returned once; request expires after 15 minutes).
+resource_templates:
+- name: session_state
+  uri_template: 'nefesh://session/{session_id}/state'
+  mime_type: text/plain
+  description: Live human state for a session. Returns current state as JSON.
+  note: 'Documented at https://nefesh.ai/docs/mcp/resources as a subscribable resource; the live server advertises resources.subscribe false, so it is a read, not a subscription.'
+resources: []
+prompts: []
+discovery:
+- kind: well-known
+  url: https://mcp.nefesh.ai/.well-known/mcp.json
+  http_status: 200
+  file: well-known/nefesh-ai-mcp-server-card.json
+  note: >-
+    Non-standard self-description manifest (name, version 6.0.0, transport, authentication, tools with
+    auth_required flags, one resource, license "Proprietary", contact, a2a_agent_card). It points documentation at
+    https://nefesh.ai/llms-full.txt (200, 35 KB) and repository at github.com/tomstuhl/nefesh-mcp-server, which
+    301s to the org repo nefesh-ai/nefesh-mcp-server. DISCREPANCY: the manifest lists SEVEN tools including
+    delete_subject ("GDPR-compliant cascading deletion of all data for a subject", auth_required true), but the
+    live tools/list returns six — delete_subject is not served. Deletion is reachable only through REST
+    DELETE /v1/subjects/{subject_id} or the CLI `nefesh delete`. The manifest also calls the session resource
+    "subscribable" while the server advertises resources.subscribe false.
+- kind: registry
+  name: ai.nefesh/human-state
+  url: https://registry.modelcontextprotocol.io/v0/servers?search=nefesh
+  http_status: 200
+  version: 4.0.0
+  published: '2026-04-03'
+  note: 'Two registry entries exist — v1.0.0 (2026-03-28, repo tomstuhl/nefesh-mcp-server) and v4.0.0 (2026-04-03, repo nefesh-ai/nefesh-mcp-server, isLatest). Both declare remotes[0] streamable-http https://mcp.nefesh.ai/mcp; the latest declares the X-Nefesh-Key header as a secret, not required.'
+- kind: directory
+  url: https://smithery.ai/servers/nefesh-ai/human-state
+  http_status: 200
+- kind: directory
+  url: https://glama.ai/mcp/connectors/ai.nefesh/human-state
+  http_status: 200
+- kind: directory
+  url: https://www.pulsemcp.com/servers/nefesh-human-state
+  http_status: 403
+  note: Bot challenge on our probe; the homepage links it.
+source_code: https://github.com/nefesh-ai/nefesh-mcp-server
+source_note: 'The repo holds proxy.py, requirements.txt, a Dockerfile, server.json (registry manifest), glama.json and an agent-card.json; its README says "7 tools" in one diagram while the live server, docs and pricing say 6.'
+tool_crosswalk_note: >-
+  No mcp/nefesh-ai-tool-crosswalk.yml is emitted because Nefesh publishes no OpenAPI to bind tools to; the
+  rest_binding on each tool above records the documented REST route each one fronts.

@@ -1,0 +1,56 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/api
+docs:
+- https://nefesh.ai/docs/api
+- https://nefesh.ai/terms
+- https://nefesh.ai/pricing
+- https://nefesh.ai/docs/v1-ingest
+limit_count: 5
+limits:
+- scope: per-session
+  window: 1 minute
+  limit: 120
+  unit: requests
+  tier: Solo (and the terms' default)
+  source: 'https://nefesh.ai/docs/api ("Per session 120 req/min"); terms §5 "120 requests per minute per session"'
+- scope: per-key
+  window: 1 minute
+  limit: 10
+  unit: requests
+  tier: Free
+  source: 'https://nefesh.ai/pricing ("10 req/min"); MCP request_api_key tool description'
+- scope: per-key
+  window: 1 minute
+  limit: 50
+  unit: new sessions
+  tier: all
+  source: 'https://nefesh.ai/docs/api ("New sessions per key 50/min"); terms §5 "50 concurrent sessions per minute per API key"'
+- scope: per-account
+  window: 1 month (billing period)
+  limit: 1000 (Free) / 50000 (Solo) / unlimited (Enterprise)
+  unit: API calls
+  source: https://nefesh.ai/pricing
+- scope: per-request
+  window: n/a
+  limit: 4 KB
+  unit: request body
+  source: 'https://nefesh.ai/docs/v1-ingest ("Maximum 4 KB per request")'
+responses:
+  rate_limit_exceeded:
+    status: 429
+    body: '{"detail": "Rate limit exceeded"} (docs common-errors table: "429: Rate limit exceeded — More than 120 req/min — Throttle requests")'
+  quota_exceeded:
+    status: 402
+    body: 'terms §5: "Exceeding your monthly quota will result in HTTP 402 responses until additional usage is purchased or the next billing period begins."'
+  body_too_large:
+    status: 413
+headers:
+  documented: []
+  observed: []
+  note: >-
+    No RateLimit-*, X-RateLimit-* or Retry-After header is documented anywhere, and none appeared on the live 401
+    responses probed on 2026-09-19 (only Cloudflare cf-ray / cf-cache-status and security headers). An agent has no
+    runtime budget signal before the 429 — it must count calls itself against the documented numbers.
+enterprise:
+  note: 'Rate limits are "Custom (unlimited available)" on the Enterprise tier; Nefesh also reserves the right to throttle or suspend access on abuse patterns (terms §5).'

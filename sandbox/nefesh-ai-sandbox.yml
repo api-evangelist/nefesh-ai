@@ -1,0 +1,37 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/cli
+docs:
+- https://nefesh.ai/docs/cli
+- https://sandbox.nefesh.ai
+- https://nefesh.ai/docs/mcp
+- https://nefesh.ai/docs/quickstart
+summary: >-
+  Nefesh has no separate sandbox environment, test-mode keys or magic test values. What it publishes is (1) a free
+  production tier that costs nothing to exercise, (2) a CLI scenario simulator that streams synthetic readings into
+  a real session, and (3) a keyless browser demo. Nothing below is invented; values are the docs' own.
+test_vs_live:
+  separation: none
+  note: 'One environment (api.nefesh.ai). Free-tier keys are prefixed nfsh_free_ but hit the same production API with the same data model; there is no test/live key pair and no sandbox base URL.'
+  free_tier: '1,000 calls/month, all signal types, 10 req/min, no credit card — https://nefesh.ai/signup or the MCP request_api_key tool'
+hosted_demo:
+  url: https://sandbox.nefesh.ai
+  status: 200 (probed 2026-09-19, 70 KB HTML app)
+  requires_key: false
+  description: '"Try rPPG + AI chat in your browser" — webcam rPPG heart rate, Polar H10 over Web Bluetooth, and an adapted AI chat. Described in the docs as a live demo, "no signup required".'
+fixture_tooling:
+- tool: nefesh simulate --scenario <scenario>
+  package: '@nefesh/cli'
+  scenarios: [calm, relaxed, focused, stressed, acute_stress]
+  description: 'Streams realistic test data matching the five stress states into a session under your key, so nefesh state / nefesh history (or the MCP tools) return a moving state without hardware.'
+  docs: https://nefesh.ai/docs/cli
+- tool: MCP quick test
+  description: 'Docs suggest asking the agent "Check the human state for session test-123" after configuring https://mcp.nefesh.ai/mcp; without a prior ingest the tool reports no data.'
+  docs: https://nefesh.ai/docs/mcp
+example_values_published:
+  note: These are documentation placeholders, not magic values with special server behaviour.
+  session_ids: [sess_abc123, sess_demo, session-42, test-001, test-session]
+  subject_ids: [user-abc-123, usr_demo, usr_tom, user-123]
+  device_ids: [dev_abc123, dev_xxx]
+time_simulation: none
+test_cards_or_accounts: not applicable (no payments API; billing is via Stripe checkout on the website)

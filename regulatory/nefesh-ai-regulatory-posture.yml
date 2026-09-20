@@ -1,0 +1,98 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source: https://nefesh.ai/docs/privacy
+docs:
+- https://nefesh.ai/docs/privacy
+- https://nefesh.ai/docs/regulatory
+- https://nefesh.ai/terms
+- https://nefesh.ai/enterprise
+probed:
+- {url: 'https://nefesh.ai/accessibility', status: 404}
+- {url: 'https://nefesh.ai/legal/subprocessors', status: 404}
+- {url: 'https://nefesh.ai/subprocessors', status: 404}
+- {url: 'https://nefesh.ai/legal/dpa', status: 404}
+- {url: 'https://nefesh.ai/dpa', status: 404}
+- {url: 'https://nefesh.ai/privacy', status: 404, note: the privacy page lives at /docs/privacy}
+- {url: 'https://nefesh.ai/transparency', status: 404}
+- {url: 'https://nefesh.ai/security', status: 404}
+- {url: 'https://nefesh.ai/trust', status: 404}
+- {url: 'https://nefesh.ai/docs/trust', status: 404, note: linked from api.nefesh.ai/docs as "Trust Scoring" — a dead link}
+- {url: 'https://nefesh.ai/docs/data-residency', status: 404}
+- {url: 'https://nefesh.ai/.well-known/security.txt', status: 200, note: 'Contact security@nefesh.ai, Policy https://nefesh.ai/terms, Preferred-Languages en, de, Expires 2027-04-01'}
+- {url: 'https://nefesh.ai/docs/privacy', status: 200}
+- {url: 'https://nefesh.ai/docs/regulatory', status: 200}
+- {url: 'https://nefesh.ai/enterprise', status: 200}
+note: >-
+  Nefesh publishes a specific privacy/retention page, a regulatory-classification page and a GDPR deletion API, and
+  says the rest is "available on request": a DPA (terms §7, enterprise page), security documentation and
+  "regulatory documentation packages" (enterprise page). Nothing behind a request is recorded here. There is no
+  subprocessor list, no accessibility statement, no SBOM, no transparency report and no support-lifetime statement
+  anywhere on the surface. Compliance claims are statements ("GDPR compliant by design", "BIPA compliant", "HIPAA:
+  no PHI stored, no BAA required", "SOC 2 In progress") — no certification, audit report or trust portal exists, so
+  no TrustCenter artifact was written and the Compliance pointer names them as statements.
+signals:
+  data_subject_request:
+    url: https://nefesh.ai/docs/privacy
+    api: 'DELETE https://api.nefesh.ai/v1/subjects/{subject_id}'
+    rights_covered: [erasure]
+    evidence:
+    - source: https://nefesh.ai/docs/privacy
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: 'Right to deletion — call DELETE /v1/subjects/{subject_id} for cascading deletion of all data ... Response: { "deleted": true, "subject_id": "user-123", "sessions_removed": 12 }'
+    - source: https://nefesh.ai/terms
+      http_status: 200
+      quote: 'Data subjects may exercise their right to erasure. Cascading deletion of all sessions and stored signals is supported via DELETE /v1/subjects/{subject_id}.'
+    - source: 'DELETE https://api.nefesh.ai/v1/subjects/probe-ae (no key)'
+      http_status: 401
+      note: The route exists and is key-gated, as documented.
+    note: >-
+      A real, documented, machine-callable erasure endpoint (also surfaced as the CLI command `nefesh delete`). It
+      serves the B2B customer's obligation to its own end users — Nefesh positions itself as data processor and the
+      customer as controller. No access/portability/rectification request path is published; regulator-facing
+      contact is not named beyond the terms' obfuscated email and security@nefesh.ai.
+  data_residency:
+    url: https://nefesh.ai/enterprise
+    regions: [eu, us]
+    scope: Enterprise tier only
+    evidence:
+    - source: https://nefesh.ai/enterprise
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: 'Enterprise SLA ... Data Residency — EU or US (customer choice) ... On-Premise Deployment — Available'
+    note: >-
+      A concrete regions statement on the enterprise page's SLA table, not a documentation page; no residency is
+      stated for the Free or Solo tiers, and no region for the default deployment is published. Recorded with that
+      scope; a buyer below Enterprise cannot rely on it.
+retention_statements:
+  note: Not a canonical signal, but the most specific published data-handling commitment — kept here because the regimes that ask for DSR also ask how long data lives.
+  source: https://nefesh.ai/docs/privacy
+  stated:
+  - 'Live session state — 20 minutes (auto-delete)'
+  - 'Session history — 24 hours'
+  - 'Trigger Memory profiles — Persistent until deleted via API'
+  - 'Raw video / audio — Never stored (edge processing only)'
+  - 'TLS 1.3 in transit, encrypted at rest; encrypted Redis with automatic key rotation'
+regulatory_classification_statements:
+  source: https://nefesh.ai/docs/regulatory
+  stated:
+  - 'General Wellness Product under FDA "General Wellness: Policy for Low Risk Devices" (2019) — not SaMD, no FDA clearance or CE marking'
+  - 'EU MDR: not a medical device under Regulation (EU) 2017/745 — no intended medical purpose'
+  - 'HIPAA: no PHI stored, no BAA required'
+  - 'Every API response carries the disclaimer "Not a medical device. For contextual AI adaptation only." and it must be displayed to end users'
+  - 'GDPR and German BDSG compliance claimed; BIPA: no raw biometric identifiers stored server-side; customer responsible for end-user consent (terms §7)'
+  - 'SOC 2: "In progress" (enterprise page)'
+absent_signals:
+  sbom: not published
+  support_lifetime: not published
+  accessibility_conformance: not published (/accessibility 404; an "Accessibility" use-case page exists but is a product pitch, not a conformance statement)
+  training_data_summary: not published
+  ai_transparency: not published as such (the mandatory medical-device disclaimer is a regulatory disclosure, not an AI-interaction disclosure)
+  global_privacy_control: no statement
+  subprocessors: not published (DPA "available on request")
+  incident_notification: not published (no public DPA)
+  age_assurance: not published
+  notice_and_action: not applicable / not published
+  transparency_report: not published
+  exit_assistance: not published (no export endpoint; deletion only)

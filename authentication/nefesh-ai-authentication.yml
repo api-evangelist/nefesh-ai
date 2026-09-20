@@ -1,0 +1,73 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/api
+docs:
+- https://nefesh.ai/docs/api
+- https://nefesh.ai/docs/quickstart
+- https://nefesh.ai/docs/mcp
+- https://nefesh.ai/docs/a2a
+- https://nefesh.ai/docs/gateway
+- https://nefesh.ai/terms
+note: >-
+  No OpenAPI is published, so this profile is written from the docs, the served agent card and live
+  unauthenticated probes rather than derived from securitySchemes. Every surface uses one credential: a per-account
+  API key sent in the X-Nefesh-Key header. Keys are prefixed nfsh_ (free-tier keys nfsh_free_); the gateway README's
+  curl examples show an older "nk_..." placeholder that the docs do not otherwise use. There is no OAuth 2.0, no
+  OpenID Connect, no scopes and no /.well-known/oauth-* metadata on any host (see well-known/nefesh-ai-well-known.yml),
+  so scopes/ is not emitted.
+summary:
+  types: [apiKey, http]
+  api_key_in: [header]
+  api_key_header: X-Nefesh-Key
+  key_prefix: nfsh_
+  bearer_accepted_on: [A2A endpoint]
+  oauth2_flows: []
+  self_provisioning: MCP tools request_api_key + check_api_key_status (no key needed; email verification link)
+schemes:
+- name: NefeshApiKey
+  type: apiKey
+  in: header
+  parameter: X-Nefesh-Key
+  applies_to:
+  - https://api.nefesh.ai (all /v1/* and /webhooks/* routes)
+  - https://gateway.nefesh.ai (/v1/chat/completions, /v1/messages — alongside X-LLM-Key for the upstream model)
+  - https://mcp.nefesh.ai/mcp (passed as a header in the MCP client config; required by get_human_state, ingest, get_trigger_memory, get_session_history)
+  - https://mcp.nefesh.ai/a2a
+  key_format: 'nfsh_... (free keys nfsh_free_...)'
+  issuance:
+  - 'https://nefesh.ai/signup — email + verification link, free tier 1,000 calls/month'
+  - 'https://nefesh.ai/pricing — Solo $25/month via Stripe; one key per subscription (terms §3)'
+  - 'MCP self-provisioning: request_api_key(email) then poll check_api_key_status(request_id) every 10 s; key returned once, request expires after 15 minutes; disposable/placeholder emails blocked server-side'
+  evidence:
+  - {source: 'https://nefesh.ai/docs/api', quote: 'All requests require the X-Nefesh-Key header.'}
+  - {source: 'https://nefesh.ai/terms', quote: 'Authentication is performed via the X-Nefesh-Key HTTP header. Each subscription provides one API key.'}
+  - {source: 'GET https://api.nefesh.ai/v1/state?session_id=x (no header)', http_status: 401, body: '{"detail":"Missing X-Nefesh-Key header."}'}
+  - {source: 'GET https://api.nefesh.ai/v1/state?session_id=x (X-Nefesh-Key: nfsh_invalid)', http_status: 401, body: '{"detail":"Invalid API key."}'}
+  - {source: 'GET https://api.nefesh.ai/webhooks/retries (no header)', http_status: 401, body: '{"detail":"Missing auth"}'}
+- name: NefeshBearer
+  type: http
+  scheme: bearer
+  applies_to:
+  - https://mcp.nefesh.ai/a2a
+  note: >-
+    The agent card's authSchemes lists {type: http, scheme: bearer} beside the apiKey header, and the A2A README says
+    "X-Nefesh-Key header or Authorization: Bearer token". The bearer value is the same API key, not an OAuth token.
+  evidence:
+  - {source: 'https://mcp.nefesh.ai/.well-known/agent-card.json', field: authSchemes}
+  - {source: 'POST https://mcp.nefesh.ai/a2a message/send (no credential)', http_status: 200, body_artifact: 'Missing API key. Provide X-Nefesh-Key header or Authorization: Bearer token. Get a free key at https://nefesh.ai/signup'}
+gateway_headers:
+  note: The gateway needs two credentials per request — Nefesh's and the upstream LLM provider's.
+  headers:
+  - {name: X-Nefesh-Key, required: true, description: Nefesh API key}
+  - {name: X-LLM-Key, required: true, description: 'Upstream LLM provider API key, forwarded in-memory and (per docs) never stored'}
+  - {name: X-LLM-Backend, required: false, description: 'Upstream base URL; defaults to https://api.openai.com for /v1/chat/completions and https://api.anthropic.com for /v1/messages'}
+  - {name: X-Nefesh-Subject, required: false, description: Subject id from the device registry (recommended)}
+  - {name: X-Nefesh-Session, required: false, description: Legacy session id}
+mcp_auth_model:
+  anonymous_allowed: [initialize, tools/list, resources/list, prompts/list, request_api_key, check_api_key_status]
+  key_required: [get_human_state, ingest, get_trigger_memory, get_session_history]
+  failure_mode: 'tools/call without a key returns a 200 tool result whose text is {"error": "API returned 401. Check your API key and parameters."} with isError false — the auth failure is in-band, not a JSON-RPC error.'
+key_handling_rules:
+  - 'Keys must not be shared, published, embedded in client-side code or transferred (terms §3).'
+  - 'Suspected compromise must be reported immediately; Nefesh may revoke compromised or misused keys without refund.'
+  - 'Subject identifiers sent with a key must be pre-hashed (SHA-256) by the customer (terms §7).'

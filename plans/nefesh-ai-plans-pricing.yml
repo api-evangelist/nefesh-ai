@@ -1,0 +1,92 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/pricing
+docs:
+- https://nefesh.ai/pricing
+- https://nefesh.ai/terms
+- https://nefesh.ai/enterprise
+currency: USD
+billing: monthly via Stripe; cancel anytime through the Stripe billing portal; no refunds for partial periods; 30 days written notice of price changes (terms §4)
+plan_count: 3
+plans:
+- name: Free
+  price: 0
+  currency: USD
+  period: month
+  price_note: '"$0 forever"'
+  included_quota:
+    api_calls_per_month: 1000
+  overage: none stated (quota exhaustion returns HTTP 402 until the next period)
+  limits:
+    rate_limit: 10 req/min
+  features:
+  - All signal types (35+)
+  - Trigger Memory
+  - 6 MCP tools (MCP + A2A)
+  - Gateway access (shared)
+  - Device Registry
+  - CLI
+  - GDPR deletion API
+  support: Community & docs
+  signup: https://nefesh.ai/signup (email verification; no credit card) or the MCP request_api_key tool
+- name: Solo
+  price: 25
+  currency: USD
+  period: month
+  badge: POPULAR
+  included_quota:
+    api_calls_per_month: 50000
+  overage: 'Usage exceeding the included quota is billed on a pay-per-use basis (terms §4) — the per-call rate is not published. Unused calls do not roll over.'
+  limits:
+    rate_limit: 120 req/min per session
+    concurrent_sessions: 50 new sessions per minute per API key
+    body_size: 4 KB
+  features:
+  - Everything in Free
+  - Multi-modal fusion (heart rate, voice, face, text)
+  - Trigger Memory
+  - 6 MCP tools
+  - Gateway (3 modes)
+  - Device Registry
+  support: Email
+  signup: https://nefesh.ai/pricing ("Start Building")
+- name: Enterprise
+  price: null
+  currency: USD
+  period: null
+  price_note: Custom — contact sales
+  included_quota:
+    api_calls_per_month: unlimited
+  overage: n/a
+  limits:
+    rate_limit: Custom (unlimited available)
+  features:
+  - Everything in Solo
+  - Dedicated infrastructure
+  - Custom SLA & uptime guarantee (99.9% stated on /enterprise)
+  - API response time <48ms p95
+  - On-premise deployment option
+  - Data residency EU or US (customer choice)
+  - DPA included
+  - Security documentation on request
+  - GDPR-compliant data deletion
+  support: Priority + SLA; support response <4 hours (business days)
+  signup: https://nefesh.ai/enterprise (Contact Sales)
+comparison_table:
+  columns: [Free, Solo, Enterprise]
+  rows:
+  - {feature: API calls/month, values: ['1,000', '50,000', Unlimited]}
+  - {feature: All signal types (35+), values: [yes, yes, yes]}
+  - {feature: Gateway (3 modes), values: [shared, yes, dedicated]}
+  - {feature: Device Registry, values: [yes, yes, yes]}
+  - {feature: MCP + A2A, values: [6 tools, 6 tools, 6 tools]}
+  - {feature: CLI, values: [yes, yes, yes]}
+  - {feature: Trigger Memory, values: [yes, yes, yes]}
+  - {feature: Rate limit, values: [10 req/min, 120 req/min, Custom]}
+  - {feature: Support, values: [Community, Email, Priority + SLA]}
+  - {feature: Dedicated infrastructure, values: [no, no, yes]}
+  - {feature: On-premise deployment, values: [no, no, yes]}
+  - {feature: GDPR deletion API, values: [yes, yes, yes]}
+notes:
+- 'The terms of service describe only the $25 / 50,000-call subscription; the free tier and enterprise tier appear on the pricing and enterprise pages.'
+- 'The MCP self-provisioning tool description repeats the free-tier terms verbatim: "Free tier: 1,000 calls/month, all signal types, 10 req/min. No credit card."'

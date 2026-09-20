@@ -1,0 +1,77 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/api
+docs:
+- https://nefesh.ai/docs/api
+- https://nefesh.ai/docs/v1-ingest
+- https://nefesh.ai/terms
+format: fastapi-detail
+format_note: >-
+  Errors are the FastAPI default envelope {"detail": <string | validation-error array>} with application/json,
+  not RFC 9457 application/problem+json. Validation failures (422) return the Pydantic list shape
+  [{"type","loc","msg","input"}]. There is no error code field, no type URI and no request id. The MCP and A2A
+  surfaces wrap the same REST failures in-band: MCP returns a 200 tool result whose text is a JSON {"error": ...}
+  string; A2A returns a completed Task whose artifact data part is {"error": ...}. No OpenAPI exists to derive from;
+  every row below is either the docs' own error table or a live observed response.
+observed:
+- {request: 'GET https://api.nefesh.ai/v1/state (no session_id, no key)', status: 422, body: '{"detail":[{"type":"missing","loc":["query","session_id"],"msg":"Field required","input":null}]}', note: Validation runs before auth on this route.}
+- {request: 'GET https://api.nefesh.ai/v1/state?session_id=x (no key)', status: 401, body: '{"detail":"Missing X-Nefesh-Key header."}'}
+- {request: 'GET https://api.nefesh.ai/v1/state?session_id=x (bad key)', status: 401, body: '{"detail":"Invalid API key."}'}
+- {request: 'GET https://api.nefesh.ai/v1/devices (no key)', status: 401}
+- {request: 'GET https://api.nefesh.ai/webhooks/retries (no key)', status: 401, body: '{"detail":"Missing auth"}'}
+- {request: 'GET https://api.nefesh.ai/v1/ingest', status: 405, body: '{"detail":"Method Not Allowed"}'}
+- {request: 'GET https://api.nefesh.ai/', status: 404, body: '{"detail":"Not Found"}'}
+- {request: 'POST https://mcp.nefesh.ai/mcp tools/list without Mcp-Session-Id', status: 400, body: '{"jsonrpc":"2.0","id":"server-error","error":{"code":-32600,"message":"Bad Request: Missing session ID"}}'}
+- {request: 'GET https://mcp.nefesh.ai/mcp', status: 406, note: Streamable HTTP GET without an SSE Accept header.}
+- {request: 'POST https://mcp.nefesh.ai/a2a tasks/get unknown id', status: 200, body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Task x not found"}}'}
+- {request: 'POST https://mcp.nefesh.ai/a2a agent/getAuthenticatedExtendedCard', status: 404, body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found: ..."}}'}
+problems:
+- status: 400
+  title: Invalid payload
+  detail: 'Invalid payload, timestamp too old, or missing signals (docs error-code table).'
+  remediation: Send session_id + a current ISO 8601 timestamp + at least one signal field.
+  source: https://nefesh.ai/docs/api
+- status: 401
+  title: Missing or invalid X-Nefesh-Key
+  detail: '{"detail":"Missing X-Nefesh-Key header."} or {"detail":"Invalid API key."}; /webhooks/* says {"detail":"Missing auth"}.'
+  remediation: Check the key; get a free one at https://nefesh.ai/signup or via the MCP request_api_key tool.
+  source: https://nefesh.ai/docs/api
+- status: 402
+  title: Monthly quota exhausted
+  detail: 'Exceeding the monthly included calls returns HTTP 402 until additional usage is purchased or the next billing period begins (terms §5).'
+  remediation: Upgrade or wait for the billing period to roll over.
+  source: https://nefesh.ai/terms
+- status: 405
+  title: Method Not Allowed
+  detail: 'Observed on GET /v1/ingest, GET /webhooks/register, GET /a2a, GET /ingest/rppg and /ingest/garmin — these routes are POST-only.'
+  source: probed 2026-09-19
+- status: 413
+  title: Body too large
+  detail: 'Payload exceeds the 4 KB per-request limit.'
+  remediation: Reduce signal fields per request.
+  source: https://nefesh.ai/docs/v1-ingest
+- status: 422
+  title: Validation error (wrong type or value)
+  detail: 'Pydantic validation list. Documented examples: "sentiment — Input should be a valid number" (sentiment is a float -1.0..1.0, not a string); "expression — Input should be ''relaxed'', ..." (invalid literal; 7 allowed values); "Extra inputs are not permitted" (unknown field, e.g. hrv_sdnn — the field is sdnn); missing signal fields (session_id + timestamp alone is a 422).'
+  remediation: Use the field names, types and literal enums in https://nefesh.ai/docs/v1-ingest; strict schema validation rejects unknown fields by design ("No PII storage").
+  source: https://nefesh.ai/docs/api
+- status: 429
+  title: Rate limit exceeded
+  detail: 'More than 120 req/min per session (Solo) or 10 req/min (Free), or more than 50 new sessions per minute per key.'
+  remediation: Throttle requests. No Retry-After or RateLimit-* headers are documented.
+  source: https://nefesh.ai/docs/api
+jsonrpc_errors:
+- {code: -32600, surface: mcp, message: 'Bad Request: Missing session ID', note: Open a session with initialize first and echo Mcp-Session-Id.}
+- {code: -32601, surface: a2a, message: 'Method not found: <method>', note: 'Only message/send, message/sendStream, tasks/get, tasks/cancel are implemented; the docs'' skill/invoke example is not.'}
+- {code: -32602, surface: a2a, message: 'Task <id> not found'}
+in_band_errors:
+- surface: mcp
+  shape: 'tool result content[0].text = "{\"error\": \"API returned 401. Check your API key and parameters.\"}", isError: false'
+  note: An agent must parse the text to notice the failure; isError is not set.
+- surface: a2a
+  shape: 'result.task.status.state = completed; artifacts[0].parts[0].data = {"error": "Missing API key. ..."}'
+  note: A failed call is a COMPLETED task with an error artifact, not a failed task.
+gaps:
+- No machine-readable error code or type URI; consumers must string-match detail.
+- No request id header on any response (Cloudflare cf-ray only on api.nefesh.ai).
+- 5xx behaviour is undocumented.

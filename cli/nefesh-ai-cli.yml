@@ -1,0 +1,56 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/cli
+docs:
+- https://nefesh.ai/docs/cli
+- https://github.com/nefesh-ai/nefesh-cli
+- https://www.npmjs.com/package/@nefesh/cli
+name: nefesh
+package: '@nefesh/cli'
+version: 1.2.0
+published: '2026-04-03'
+license: MIT
+language: TypeScript (commander + chalk, Node >=18)
+install:
+- method: npm
+  command: npm install -g @nefesh/cli
+authentication:
+  command: nefesh auth login --key YOUR_API_KEY
+  storage: ~/.nefesh/config.json
+  credential: X-Nefesh-Key API key (nfsh_ prefix)
+machine_readable_output:
+  flag: --json
+  note: 'Every command supports --json for machine-readable output; the docs pitch the CLI to terminal agents as "10-32x lower token cost than MCP".'
+commands:
+- group: auth
+  commands:
+  - {command: nefesh auth login --key KEY, description: Authenticate with your API key}
+- group: signals
+  commands:
+  - {command: 'nefesh ingest --session SESSION --heart-rate 72 --tone calm', description: Send biometric signals (POST /v1/ingest)}
+  - {command: nefesh state SESSION, description: Get current state for a session (GET /v1/state)}
+  - {command: 'nefesh history SESSION --minutes 5', description: View state history over time (GET /v1/history)}
+  - {command: nefesh triggers, description: View psychological trigger profile (GET /v1/triggers)}
+- group: privacy
+  commands:
+  - {command: nefesh delete, description: 'GDPR-compliant data deletion (DELETE /v1/subjects/{subject_id})'}
+- group: testing
+  commands:
+  - {command: 'nefesh simulate --scenario calm|relaxed|focused|stressed|acute_stress', description: Stream realistic test data matching the five stress states}
+- group: agent setup
+  commands:
+  - {command: 'nefesh setup cursor|claude-desktop|claude-code|vscode|windsurf|kiro', description: 'Auto-configure the remote MCP server (https://mcp.nefesh.ai/mcp) in an AI agent''s config file'}
+key_flows:
+- name: First call from the terminal
+  steps:
+  - nefesh auth login --key YOUR_KEY
+  - nefesh simulate --scenario stressed
+  - nefesh state test-session
+  - nefesh history test-session --minutes 5
+- name: Configure an agent for MCP
+  steps:
+  - nefesh setup cursor
+note: >-
+  The CLI is a thin wrapper over the REST API and the only published first-party package (see
+  packages/nefesh-ai-packages.yml). `nefesh simulate` is the provider's only published fixture/trigger tool
+  (see sandbox/nefesh-ai-sandbox.yml).

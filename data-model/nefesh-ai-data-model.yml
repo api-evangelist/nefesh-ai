@@ -1,0 +1,86 @@
+generated: '2026-09-19'
+method: searched
+source: https://nefesh.ai/docs/v1-ingest
+docs:
+- https://nefesh.ai/docs/v1-ingest
+- https://nefesh.ai/docs/api
+- https://nefesh.ai/docs/gateway
+- https://nefesh.ai/docs/webhooks
+- https://github.com/nefesh-ai/human-state-protocol
+schema: json-schema/nefesh-ai-hsp-1.0.schema.json
+note: >-
+  No OpenAPI exists to derive $ref links from. Entities and relationships below are read from the documented
+  request/response shapes and the first-party Human State Protocol JSON Schema (draft 2020-12, $id
+  https://nefesh.ai/schemas/hsp-1.0.schema.json — note the $id URL itself returns the site's 404 page). Field
+  ranges and enums are the docs' own.
+id_conventions:
+  session_id: client-generated string, max 256 chars, UUIDv7 recommended
+  subject_id: customer-supplied, must be pre-hashed (SHA-256); examples usr_demo, user-abc-123
+  device_id: server-issued, dev_ prefix in examples
+  api_key: nfsh_ / nfsh_free_ prefix
+entities:
+- name: Subject
+  description: A persistent human (per-customer, pre-hashed id). Owns devices, sessions and a trigger-memory profile. Deleted wholesale by DELETE /v1/subjects/{subject_id}.
+  key: subject_id
+  fields: [subject_id]
+- name: Device
+  description: A registered wearable/sensor bound to a subject so ingest can omit session management.
+  key: device_id
+  fields: [device_id, device_name, device_type, subject_id]
+  examples: {device_type: [polar_h10, garmin, webcam]}
+  operations: [POST /v1/devices, GET /v1/devices, 'DELETE /v1/devices/{device_id}']
+- name: Session
+  description: One human-device conversation window. Live state auto-deletes after 20 minutes; history kept 24 hours.
+  key: session_id
+  fields: [session_id, subject_id]
+- name: SignalReading
+  description: One POST /v1/ingest body — session_id + timestamp + at least one signal field; optional subject_id, device_id, source_device, confidence, stress_score override, user_message, ai_response.
+  key: none (append-only, timestamped)
+  signal_categories:
+    cardiovascular: {fused: true, fields: [heart_rate (30-220), rmssd, sdnn, pnn50, mean_ibi, ibi_count, spo2 (0-100)]}
+    vocal: {fused: true, fields: ['tone (calm|focused|hesitant|tense|frustrated|anxious|hostile|excited|neutral)', speech_rate, pitch_variability]}
+    visual: {fused: true, fields: ['expression (relaxed|concentrated|frowning|smiling|tense|surprised|neutral)', 'gaze (direct|averted|downward|wandering)', 'posture (upright|leaning_forward|leaning_back|slouched)', engagement (0.0-1.0)]}
+    textual: {fused: true, fields: [sentiment (-1.0..1.0 float), 'urgency (low|medium|high|critical)']}
+    conversation: {fused: false, purpose: trigger memory, fields: [user_message (<=4096), ai_response (<=4096)]}
+    metabolic: {fused: false, fields: [glucose_mg_dl (20-600), glucose_mmol_l (1.0-33.0), 'glucose_trend (rapid_fall|falling|stable|rising|rapid_rise)']}
+    neural: {fused: false, fields: [eeg_alpha_power, eeg_beta_power, eeg_theta_power, cognitive_load (0.0-1.0)]}
+    electrodermal: {fused: false, fields: [eda, skin_temperature]}
+    respiratory: {fused: false, fields: [respiratory_rate]}
+    movement: {fused: false, fields: [steps_last_minute, 'activity_level (sedentary|light|moderate|vigorous)']}
+    sleep: {fused: false, fields: ['sleep_stage (awake|light|deep|rem)']}
+- name: HumanState
+  description: The fused response document — the Human State Protocol 1.0 object. Returned by POST /v1/ingest, GET /v1/state, the MCP get_human_state tool and the A2A get-human-state skill.
+  schema: json-schema/nefesh-ai-hsp-1.0.schema.json
+  fields:
+    required: [hsp_version, session_id, timestamp, state, stress_score, confidence]
+    optional: [signals_received, suggested_action, action_reason, recommendation, adaptation_effectiveness, topics_detected, active_triggers, resolved_triggers, disclaimer]
+  enums:
+    state: [calm (0-19), relaxed (20-39), focused (40-59), stressed (60-79), acute_stress (80-100)]
+    suggested_action: [maintain_engagement, simplify_and_focus, de-escalate_and_shorten, pause_and_ground]
+- name: AdaptationEffectiveness
+  description: Closed-loop feedback embedded in HumanState from the second call in a session.
+  fields: [previous_action, previous_score, current_score, stress_delta, effective]
+- name: StateHistory
+  description: GET /v1/history?session_id=X&minutes=N — timestamped datapoints (stress_score, state, heart_rate) plus an overall trend.
+  fields: ['datapoints[]', 'trend (rising|falling|stable)']
+- name: Trigger
+  description: A psychological topic tracked per subject across sessions from user_message/ai_response text.
+  key: topic name
+  fields: ['status (active|resolved)', avg_stress, peak_stress, sessions, last_seen, observation_count, avg_score, peak_score]
+  operations: ['GET /v1/triggers?subject_id=X']
+- name: Webhook
+  description: A registered delivery URL for state_change events on a session.
+  fields: [url, 'events[]', session_id]
+  operations: [POST /webhooks/register, /webhooks/retries]
+relationships:
+- {from: Subject, to: Device, type: has_many, via: subject_id}
+- {from: Subject, to: Session, type: has_many, via: subject_id}
+- {from: Subject, to: Trigger, type: has_many, via: subject_id}
+- {from: Device, to: Subject, type: belongs_to, via: subject_id}
+- {from: Session, to: SignalReading, type: has_many, via: session_id}
+- {from: Session, to: HumanState, type: has_one, via: session_id, note: current live state}
+- {from: Session, to: StateHistory, type: has_one, via: session_id}
+- {from: Session, to: Webhook, type: has_many, via: session_id}
+- {from: HumanState, to: AdaptationEffectiveness, type: has_one, via: embedded}
+- {from: SignalReading, to: Device, type: belongs_to, via: device_id, optional: true}
+- {from: SignalReading, to: Trigger, type: has_many, via: topics_detected, note: derived by topic extraction}

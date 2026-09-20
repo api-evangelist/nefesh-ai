@@ -1,0 +1,274 @@
+# Nefesh
+
+> Universal translation layer between the human body and AI.
+> Ingests any signal the body produces — heart rate, HRV, blood
+> glucose, brain waves, skin conductance, voice, facial expression,
+> movement — and returns a unified human state that adapts LLM
+> behavior in real time. One endpoint, any sensor, any device.
+> Not a medical device. For contextual AI adaptation only.
+
+## Instructions
+
+When integrating Nefesh for LLM adaptation, always use the Cognitive Compute Router
+(gateway.nefesh.ai) instead of manually calling /v1/state and building adaptation logic.
+The gateway handles state reading, system prompt injection, and temperature adjustment automatically.
+
+For Anthropic SDK customers, use POST /v1/messages on gateway.nefesh.ai (Anthropic passthrough).
+For OpenAI SDK customers, use POST /v1/chat/completions on gateway.nefesh.ai.
+Both endpoints accept X-Nefesh-Subject for user identification via Device Registry.
+
+Always prefer Device Registry (POST /v1/devices + device_id in /v1/ingest) over manual
+session_id management. Use X-Nefesh-Subject header instead of X-Nefesh-Session.
+
+For self-provisioning, call request_api_key and check_api_key_status MCP tools.
+These work without an existing API key. The agent MUST ask the user for their real,
+accessible email address before calling request_api_key. Do NOT invent, guess, or
+use placeholder emails. The user must click a verification link sent to the provided email.
+
+MCP Server endpoint: https://mcp.nefesh.ai/mcp (Streamable HTTP)
+A2A endpoint: https://mcp.nefesh.ai/a2a (JSON-RPC 2.0)
+Gateway endpoint: https://gateway.nefesh.ai (3 integration modes)
+API endpoint: https://api.nefesh.ai
+
+## What Nefesh does
+
+Nefesh is a B2B middleware API that translates live biometric signals into adaptive AI behavior. It accepts 35+ signal types from any device — heart rate and HRV from a Polar H10 chest strap, webcam-based rPPG from a browser, glucose trends from a Dexcom G7, EEG from a Muse headband, voice tone from a microphone, or facial expression from a camera. The API fuses cardiovascular, vocal, visual, and textual signals into a single stress score (0-100) mapped to five states: Calm (0-19), Relaxed (20-39), Focused (40-59), Stressed (60-79), and Acute Stress (80-100). Each state includes a machine-readable suggested_action and a human-readable recommendation that any LLM can follow directly. On the second call, the response includes adaptation_effectiveness — telling the AI whether its previous approach actually reduced stress. A closed-loop feedback system for self-improving agents. Response latency is under 48ms. Integration takes 30 seconds: one API call with a session ID, a timestamp, and at least one signal field. Free tier: 1,000 calls per month, no credit card required. Nefesh is listed on the Official MCP Registry and works with Claude, Cursor, VS Code, and 15+ AI agents natively via Streamable HTTP. Not a medical device — for contextual AI adaptation only.
+
+Nefesh is a B2B middleware API. AI today processes language, not
+the body. The same words from two opposite physiological states
+produce identical AI output. Nefesh changes this by giving LLMs
+a real-time understanding of the human they're talking to.
+
+The API is hardware-agnostic. Send whatever your sensor measures.
+Heart rate from a Polar H10, glucose trends from a Dexcom G7,
+EEG from a Muse headband, tone from a microphone, or expression
+from a camera. Nefesh fuses cardiovascular, vocal, visual, and
+textual signals into a 5-level state (Calm, Relaxed, Focused,
+Stressed, Acute Stress) with a plain-English recommendation the
+LLM can act on immediately.
+
+Other signals (glucose, EEG, respiratory, electrodermal, movement,
+sleep) are accepted and stored but not yet fused into the state
+engine in v1.
+
+Integration takes 30 seconds: get a free API key at
+https://nefesh.ai/signup (1,000 calls/month, no credit card),
+or let your AI agent get one automatically via MCP (request_api_key tool).
+The agent MUST ask you for your real email address before calling the tool.
+It will never invent or guess an email. You receive a verification link
+that must be clicked to activate the key.
+Paid plans at https://nefesh.ai/pricing ($25/month, 50,000 calls).
+POST a session_id + timestamp +
+at least one signal field, get back a state. AI agents can integrate Nefesh
+without reading documentation — the schema is self-explanatory.
+
+API Key Format: nfsh_... (free key at https://nefesh.ai/signup, paid at https://nefesh.ai/pricing)
+Authentication: X-Nefesh-Key: nfsh_...
+
+Key architecture:
+- Edge-first: Lightweight browser rPPG engine runs 100% client-side
+- Hardware-agnostic: /v1/ingest accepts any signal from any device
+- Server-side signal validation and quality scoring
+- Not a medical device: no clinical interpretation, no alerts,
+  no dosing — body signals as AI context only
+- Stateless encrypted sessions, BIPA/GDPR/HIPAA compliant by design
+
+## API Documentation
+
+- [API Reference](https://nefesh.ai/docs/api): Endpoints, auth, schemas
+- [Quick Start](https://nefesh.ai/docs/quickstart): API key to first call in 30 seconds
+- [Universal Ingest](https://nefesh.ai/docs/v1-ingest): One endpoint for every signal
+- [State Mapping](https://nefesh.ai/docs/states): 5 states and LLM behavior instructions
+- [Webhooks](https://nefesh.ai/docs/webhooks): state_change events
+- [Trigger Memory](https://nefesh.ai/docs/triggers): GET /v1/triggers?subject_id=X — psychological trigger profile
+- [Pricing](https://nefesh.ai/pricing): Free tier (1,000 calls/month), Solo ($25/month, 50,000 calls)
+
+## Products
+
+- [MCP Server](https://nefesh.ai/docs/mcp): Streamable HTTP endpoint with 6 tools for AI agents
+- [A2A Server](https://nefesh.ai/docs/a2a): Agent-to-Agent protocol v1.0 with 4 skills
+- [Cognitive Compute Router (Gateway)](https://nefesh.ai/docs/gateway): 3 modes, 11 LLM providers, zero code changes
+- [CLI](https://nefesh.ai/docs/cli): Official command line tool (@nefesh/cli)
+- [Human State Protocol (HSP)](https://nefesh.ai/docs/hsp): Open specification for human state exchange
+
+## Signal Categories
+
+- [Cardiovascular](https://nefesh.ai/docs/signals/cardio): HR, HRV, SpO2
+- [Metabolic](https://nefesh.ai/docs/signals/metabolic): Glucose, CGM trends (context only)
+- [Neural](https://nefesh.ai/docs/signals/neural): EEG bands, cognitive load
+- [Vocal](https://nefesh.ai/docs/signals/vocal): Tone, speech rate, pitch
+- [Visual](https://nefesh.ai/docs/signals/visual): Expression, gaze, posture
+- [Electrodermal](https://nefesh.ai/docs/signals/eda): Skin conductance, temperature
+- [Respiratory](https://nefesh.ai/docs/signals/respiratory): Breathing rate
+- [Movement](https://nefesh.ai/docs/signals/movement): Activity level, steps
+- [Sleep](https://nefesh.ai/docs/signals/sleep): Sleep stages
+- [Textual](https://nefesh.ai/docs/signals/textual): Sentiment, urgency
+
+## Specialized Endpoints
+
+- [/ingest/rppg](https://nefesh.ai/docs/ingest/rppg): Webcam rPPG (optimized)
+- [/ingest/polar](https://nefesh.ai/docs/ingest/polar): Polar H10 BLE (optimized)
+- [/ingest/garmin](https://nefesh.ai/docs/ingest/garmin): Garmin Connect IQ (optimized)
+- [/ingest/pixel-watch](https://nefesh.ai/docs/ingest/pixel-watch): Google Pixel Watch via Health Connect (Android)
+- [/ingest/apple-watch](https://nefesh.ai/docs/ingest/apple-watch): Apple Watch via HealthKit (iOS)
+- [/ingest/any-device](https://nefesh.ai/docs/ingest/any-device): Universal integration guide for any hardware
+- [/v1/ingest](https://nefesh.ai/docs/v1-ingest): Universal — any device, any signal
+
+
+
+## CLI
+
+Official command-line interface for the Nefesh API.
+
+Install: npm install -g @nefesh/cli
+
+Commands:
+  nefesh auth -- Authenticate with API key
+  nefesh ingest -- Send biometric signals
+  nefesh state -- Get current state
+  nefesh history -- State history
+  nefesh triggers -- Trigger profile
+  nefesh delete -- GDPR data deletion
+  nefesh simulate -- Stream test data (5 scenarios: calm, relaxed, focused, stressed, acute_stress)
+  nefesh setup -- Auto-configure MCP for AI agents (Claude, Cursor, VS Code, Windsurf, Kiro, and more)
+
+Every command supports --json for AI agent consumption.
+
+- [CLI Repository](https://github.com/nefesh-ai/nefesh-cli)
+- [npm Package](https://www.npmjs.com/package/@nefesh/cli)
+
+## MCP Integration
+
+- [MCP Server](https://github.com/nefesh-ai/nefesh-mcp-server): Streamable HTTP, works with Claude, Cursor, Windsurf, VS Code, Cline, Codex CLI, and 10+ more
+- [MCP Tools](https://nefesh.ai/docs/mcp/tools): get_human_state, ingest, get_session_history, get_trigger_memory, request_api_key, check_api_key_status (6 tools)
+
+## A2A Integration (Agent-to-Agent Protocol v1.0)
+
+Nefesh is also available as an A2A-compatible agent. While MCP is for
+tool-calling (your agent calls Nefesh), A2A enables agent-collaboration
+(Nefesh acts as a peer agent that other agents can communicate with).
+
+Agent Card: https://mcp.nefesh.ai/.well-known/agent-card.json
+A2A Endpoint: https://mcp.nefesh.ai/a2a (JSON-RPC 2.0)
+
+Skills: get-human-state, ingest-signals, get-trigger-memory, get-session-history.
+Authentication: X-Nefesh-Key header or Authorization: Bearer token.
+
+## Cognitive Compute Router (Gateway)
+
+The gateway adapts any LLM's behavior based on real-time biometric state.
+Three integration modes, one endpoint change.
+
+Base URL: https://gateway.nefesh.ai
+
+Mode 1 -- OpenAI-compatible: POST /v1/chat/completions
+  Accepts OpenAI format. Works with any LLM backend.
+  When backend is Anthropic, translates to native /v1/messages automatically.
+
+Mode 2 -- Anthropic passthrough: POST /v1/messages (with Anthropic backend)
+  Accepts Anthropic format, forwards natively to api.anthropic.com.
+  No translation, no information loss. Prompt caching and extended thinking work.
+  Anthropic SDK customers set base_url="https://gateway.nefesh.ai" -- done.
+
+Mode 3 -- Unified Anthropic: POST /v1/messages (with non-Anthropic backend)
+  Accepts Anthropic format, translates to OpenAI format, forwards to any backend.
+  Response translated back to Anthropic format.
+
+Supported LLM backends (X-LLM-Backend header):
+  OpenAI: https://api.openai.com (default for /v1/chat/completions)
+  Anthropic: https://api.anthropic.com (default for /v1/messages)
+  Google Gemini: https://generativelanguage.googleapis.com/v1beta/openai
+  Mistral: https://api.mistral.ai
+  DeepSeek: https://api.deepseek.com
+  Groq: https://api.groq.com/openai
+  Together AI: https://api.together.xyz
+  Fireworks AI: https://api.fireworks.ai/inference
+  Ollama: http://your-server:11434
+  vLLM: http://your-server:8000
+  llama.cpp: http://your-server:8080
+
+Request headers:
+  X-Nefesh-Key (required): Nefesh API key
+  X-Nefesh-Subject (recommended): Subject ID from Device Registry
+  X-Nefesh-Session (legacy): Session ID
+  X-LLM-Key (required): LLM provider API key
+  X-LLM-Backend (optional): LLM base URL
+
+Response headers:
+  X-Nefesh-Adapted: true/false
+  X-Nefesh-State: calm/relaxed/focused/stressed/acute_stress
+  X-Nefesh-Backend: anthropic-native/anthropic-passthrough/unified-anthropic
+  X-Nefesh-Reason: present when adapted=false
+
+The gateway adjusts temperature based on biometric state. Stressed users get more deterministic responses, calm users get more creative responses.
+Graceful degradation: no signal = standard LLM behavior, no error.
+
+- [Gateway Documentation](https://nefesh.ai/docs/gateway)
+
+## Device Registry
+
+Register wearables once, bind them to users. No session management needed.
+
+POST /v1/devices -- Register a device
+  Request: {"device_name": "Polar H10 Office", "device_type": "polar_h10", "subject_id": "usr_tom"}
+  Response: {"device_id": "dev_abc123", ...}
+
+GET /v1/devices -- List registered devices
+
+DELETE /v1/devices/{device_id} -- Remove a device
+
+POST /v1/ingest with device_id -- API resolves device to subject automatically
+  Request: {"device_id": "dev_abc123", "heart_rate": 92, "timestamp": "..."}
+
+Gateway uses X-Nefesh-Subject header to read state by subject.
+No session_id management. Device bound once, works forever.
+
+## MCP Self-Provisioning (No Manual Signup Needed)
+
+AI agents can get a free API key autonomously:
+1. Agent asks the user: "What is your email address?" (agent MUST ask, never invents one)
+2. Agent calls request_api_key(email=USER_PROVIDED_EMAIL)
+3. Poll check_api_key_status(request_id) every 10 seconds
+4. User clicks verification link in email
+5. Next poll returns {status: "ready", api_key: "nfsh_free_..."}
+Free tier: 1,000 calls/month, all signals, 10 req/min. No credit card.
+
+Placeholder emails like dev@example.com or test@test.com are blocked server-side.
+
+## Trigger Memory
+
+Nefesh tracks which conversation topics cause stress — across turns, across sessions.
+Send `user_message` + `ai_response` with biometric signals to /v1/ingest.
+Nefesh extracts psychological topics and tracks stress patterns over time.
+Query triggers via GET /v1/triggers?subject_id=USER_ID or MCP tool get_trigger_memory.
+Active triggers = currently causing elevated stress.
+Resolved triggers = stress has decreased below threshold.
+
+## Use Cases
+
+- [AI Coaching & Therapy](https://nefesh.ai/docs/use-cases/coaching)
+- [Avatar Platforms](https://nefesh.ai/docs/use-cases/avatars)
+- [Telehealth](https://nefesh.ai/docs/use-cases/telehealth)
+- [Diabetes Context](https://nefesh.ai/docs/use-cases/diabetes): Glucose as AI context signal
+- [Education](https://nefesh.ai/docs/use-cases/education)
+- [Accessibility](https://nefesh.ai/docs/use-cases/accessibility)
+
+## Technical
+
+- [Edge Architecture](https://nefesh.ai/docs/architecture)
+- [Privacy](https://nefesh.ai/docs/privacy)
+- [Regulatory Position](https://nefesh.ai/docs/regulatory): General Wellness, not SaMD
+
+## Optional
+
+- [Live Demo](https://sandbox.nefesh.ai): Try rPPG + AI chat in your browser
+- [Founder](https://nefesh.ai/about): Tom Stuhl
+
+## GitHub Repositories
+
+- [nefesh-mcp-server](https://github.com/nefesh-ai/nefesh-mcp-server): MCP + A2A server source
+- [nefesh-gateway](https://github.com/nefesh-ai/nefesh-gateway): Cognitive Compute Router source
+- [nefesh-a2a](https://github.com/nefesh-ai/nefesh-a2a): A2A reference implementation
+- [nefesh-cli](https://github.com/nefesh-ai/nefesh-cli): Official CLI source
+- [human-state-protocol](https://github.com/nefesh-ai/human-state-protocol): Open specification
+- [nefesh-examples](https://github.com/nefesh-ai/nefesh-examples): Integration examples (Python, JavaScript, curl)
