@@ -59,6 +59,12 @@ apis:
   - Biometrics
   - Stress Detection
   - Human State
+  - Webhook
+  - Device Registry
+  tags_raw:
+  - Biometrics
+  - Stress Detection
+  - Human State
   - Webhooks
   - Device Registry
   properties:
@@ -106,6 +112,11 @@ apis:
   humanURL: https://nefesh.ai/docs/gateway
   baseURL: https://gateway.nefesh.ai
   tags:
+  - LLM Gateway
+  - Proxy
+  - Human State
+  - OpenAI-Compatible
+  tags_raw:
   - LLM Gateway
   - Proxy
   - Human State
