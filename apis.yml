@@ -13,6 +13,24 @@ description: >-
   temperature from the live state for OpenAI- and Anthropic-shaped clients. It also maintains the open
   Human State Protocol (HSP 1.0) JSON Schema and an official npm CLI. Positioned as a General Wellness
   product, not a medical device. No OpenAPI is published for any surface.
+deliveryModel:
+  model: saas
+  license_evidence:
+    not_product:
+    - nefesh-ai/nefesh-a2a
+    - nefesh-ai/nefesh-examples
+    - nefesh-ai/nefesh-gateway
+    - nefesh-ai/nefesh-mcp-server
+  open_source: unknown
+  commercial: true
+  callable_host: false
+  label: Hosted service · you call their endpoint
+  confidence: low
+  source:
+  - pricing
+  - repository-not-product
+  generated: '2026-09-25'
+  method: derived
 image: https://nefesh.ai/icon.svg
 url: https://raw.githubusercontent.com/api-evangelist/nefesh-ai/refs/heads/main/apis.yml
 x-type: company
