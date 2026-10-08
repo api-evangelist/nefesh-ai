@@ -90,3 +90,31 @@ comparison_table:
 notes:
 - 'The terms of service describe only the $25 / 50,000-call subscription; the free tier and enterprise tier appear on the pricing and enterprise pages.'
 - 'The MCP self-provisioning tool description repeats the free-tier terms verbatim: "Free tier: 1,000 calls/month, all signal types, 10 req/min. No credit card."'
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - hybrid
+  - metered
+  units: []
+  plans:
+  - name: Free
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods:
+    - month
+  - name: Solo
+    access: other
+    model: hybrid
+    model_how: derived
+    units: []
+    periods:
+    - month
+  - name: Enterprise
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods: []
