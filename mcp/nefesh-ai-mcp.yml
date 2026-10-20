@@ -100,14 +100,31 @@ authentication:
     server-side.
 tools:
 - name: get_human_state
+  description: "Get current unified human state for a session. Call this before generating important responses.\n\
+    \n    Returns:\n    - state: calm | relaxed | focused | stressed | acute_stress\n    - stress_score:\
+    \ 0-100 (lower = calmer)\n    - confidence: 0.0-1.0 (based on signal quality and device type)\n  \
+    \  - suggested_action: maintain_engagement | simplify_and_focus | de-escalate_and_shorten | pause_and_ground\n\
+    \    - action_reason: human-readable explanation of why this action was suggested\n    - adaptation_effectiveness\
+    \ (on 2nd+ call): shows whether your previous suggested_action actually reduced stress — contains\
+    \ previous_action, stress_delta, and effective boolean. Use this to self-improve.\n\n    Use suggested_action\
+    \ to adapt your response: calm/relaxed = full complexity, focused = shorter and structured, stressed\
+    \ = max 2 sentences, acute_stress = one grounding sentence only.\n\n    Requires a prior ingest call\
+    \ to have data. Not a medical device."
   auth_required: true
   read_only: true
   input_schema:
     session_id: string (required)
   rest_binding: GET https://api.nefesh.ai/v1/state?session_id={session_id}
-  description: 'Get current unified human state for a session: state, stress_score 0-100, confidence,
-    suggested_action, action_reason, adaptation_effectiveness from the 2nd call. Requires a prior ingest.'
 - name: ingest
+  description: "Send biometric signals from any sensor, get unified state back.\n\n    Required: session_id\
+    \ + timestamp (ISO 8601) + at least one signal.\n    Send whatever you have — the API fuses all signals\
+    \ into one state.\n\n    Common signals (highest impact):\n    - heart_rate (bpm, 30-220) + rmssd\
+    \ (ms) — cardiovascular\n    - tone: calm | tense | anxious | hostile — vocal\n    - sentiment: -1.0\
+    \ to 1.0 — textual\n    - expression: relaxed | neutral | tense — visual\n\n    For trigger memory\
+    \ (cross-session psychological tracking):\n    - Include subject_id (consistent per user, hashed)\n\
+    \n    Returns same fields as get_human_state plus signals_received list and topics_detected (if conversation\
+    \ text was included).\n\n    source_device is optional but improves confidence scoring. Not a medical\
+    \ device."
   auth_required: true
   read_only: false
   input_schema:
@@ -119,43 +136,58 @@ tools:
       cognitive_load, eda, skin_temperature, respiratory_rate, steps_last_minute, activity_level, sleep_stage,
       stress_score, source_device, confidence, subject_id'
   rest_binding: POST https://api.nefesh.ai/v1/ingest
-  description: Send biometric signals from any sensor, get unified state back. Include subject_id for
-    cross-session trigger memory.
   note: The MCP inputSchema does NOT expose user_message / ai_response or device_id, which the REST /v1/ingest
     accepts — trigger-memory topic extraction and device-registry resolution are REST-only through this
     surface.
 - name: get_trigger_memory
+  description: "Retrieve psychological trigger profile for a subject.\n\n    Returns which conversation\
+    \ topics consistently cause stress (active triggers) and which have been resolved over time.\n\n \
+    \   - active triggers: topics where stress was elevated across multiple sessions. Tread carefully.\n\
+    \    - resolved triggers: topics where stress has decreased. Safe to explore deeper.\n\n    Each trigger\
+    \ includes observation_count, avg_score, peak_score, and last_seen.\n\n    Requires prior ingest calls\
+    \ with the same subject_id. Not a medical device."
   auth_required: true
   read_only: true
   input_schema:
     subject_id: string (required)
   rest_binding: GET https://api.nefesh.ai/v1/triggers?subject_id={subject_id}
-  description: Retrieve the psychological trigger profile for a subject — active vs resolved topics with
-    observation_count, avg_score, peak_score, last_seen.
 - name: get_session_history
+  description: "Get state history for a session over time.\n\n    Returns timestamped datapoints with\
+    \ stress_score, state, and heart_rate for each observation.\n    Includes an overall trend: rising\
+    \ | falling | stable.\n\n    Use minutes parameter to control the lookback window (default: 5, max:\
+    \ 60).\n    Useful for detecting stress patterns during a conversation. Not a medical device."
   auth_required: true
   read_only: true
   input_schema:
     session_id: string (required)
     minutes: integer (default 5, max 60)
   rest_binding: GET https://api.nefesh.ai/v1/history?session_id={session_id}&minutes={minutes}
-  description: Timestamped state history for a session with an overall trend (rising | falling | stable).
+- name: delete_subject
+  description: "Permanently delete all sessions and trigger memory for a subject.\n\n    Irreversible.\
+    \ Only call when the user explicitly requests this deletion."
 - name: request_api_key
+  description: "Start free API key authorization; no existing API key needed.\n\n    Returns a verification_url.\
+    \ Ask the user to open that URL in their\n    browser, enter their own email, then open the verification\
+    \ email and\n    confirm access for their agent. This tool\n    does not accept email addresses and\
+    \ does not send email.\n    Do not choose, invent, or submit an email on the user's behalf.\n    Poll\
+    \ check_api_key_status with the returned request_id at the supplied\n    interval. Stop if the request\
+    \ expires. Never create new requests in a loop."
   auth_required: false
   read_only: false
   input_schema:
     email: string (required)
   rest_binding: undocumented (signup flow)
-  description: Request a free Nefesh API key by email verification. The tool text instructs the agent
-    to ask the user for a real email and never invent one.
 - name: check_api_key_status
+  description: "Check a pending API key authorization using its request_id.\n\n    Use request_id exactly\
+    \ as returned by request_api_key, never an email.\n    Poll every 10 seconds. awaiting_user means\
+    \ the user must open the URL;\n    pending means email verification is still required. ready returns\
+    \ the\n    API key once only. Store it and include it in all subsequent HTTP calls.\n    Stop on expired;\
+    \ ask the user before starting another authorization."
   auth_required: false
   read_only: true
   input_schema:
     request_id: string (required)
   rest_binding: undocumented (signup flow)
-  description: Poll a pending key request every 10 s; returns pending or ready with the key (returned
-    once; request expires after 15 minutes).
 resource_templates:
 - name: session_state
   uri_template: nefesh://session/{session_id}/state
@@ -230,3 +262,4 @@ tool_quality:
   scored: false
   note: Facts from the saved tools/list capture (mcp_tool_quality.py); recorded, not scored. Checks learned
     from Glimind's agent-readiness audit.
+tools_count: 7
