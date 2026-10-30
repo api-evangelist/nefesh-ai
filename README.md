@@ -64,5 +64,130 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Nefesh AI is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.
-- https://nefesh.ai/
+Nefesh AI (nefesh.ai) sells a B2B "human state" middleware API for AI agents: POST live biometric signals from any device — heart rate and HRV from a chest strap, webcam rPPG, voice tone, facial expression, text sentiment, plus accepted-but-not-yet-fused glucose, EEG, electrodermal, respiratory, movement and sleep fields — to one endpoint (api.nefesh.ai/v1/ingest) and get back a unified stress score (0-100) mapped to five states with a machine-readable suggested_action and a closed-loop adaptation_effectiveness signal. The same capability is exposed four ways: a REST API with webhooks and a device registry, a hosted Streamable-HTTP MCP server (6 tools, two of them keyless self-provisioning) listed on the official MCP Registry, an A2A agent (4 skills) discovered from a card on mcp.nefesh.ai, and a "Cognitive Compute Router" LLM gateway that rewrites system prompt and temperature from the live state for OpenAI- and Anthropic-shaped clients. It also maintains the open Human State Protocol (HSP 1.0) JSON Schema and an official npm CLI. Positioned as a General Wellness product, not a medical device. No OpenAPI is published for any surface.
+
+**Areas:** Company · Biometrics · Human State · Stress Detection · Emotion AI · AI Agents · MCP · A2A · LLM Gateway · Wearables · Digital Health · Middleware
+
+## Nefesh AI on APIs.io
+
+Everything profiled for Nefesh AI is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/nefesh-ai/](https://apis.io/providers/nefesh-ai/)** — or go straight to one of the APIs or properties below.
+
+### APIs (4)
+
+- [Nefesh Human State API](https://apis.io/apis/nefesh-ai/nefesh-human-state-api/) — REST API on api.nefesh.ai (FastAPI): POST /v1/ingest takes a session_id, an ISO 8601 timestamp and at least one of 35+ signal fields and returns the fused…
+- [Nefesh Cognitive Compute Router](https://apis.io/apis/nefesh-ai/nefesh-cognitive-compute-router/) — LLM gateway on gateway.nefesh.ai that injects the caller's live human state into the request and adjusts temperature before forwarding to an upstream model.…
+- [Nefesh MCP Server](https://apis.io/apis/nefesh-ai/nefesh-mcp-server/) — Hosted remote MCP server at https://mcp.nefesh.ai/mcp (Streamable HTTP, protocol 2025-06-18, session-id based; serverInfo nefesh 1.26.0). Anonymous…
+- [Nefesh Human State Agent (A2A)](https://apis.io/apis/nefesh-ai/nefesh-human-state-agent-a2a/) — A2A agent served from the MCP host: card at https://mcp.nefesh.ai/.well-known/agent-card.json, JSON-RPC 2.0 endpoint at POST https://mcp.nefesh.ai/a2a…
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### AsyncAPI (1)
+
+Event-driven and webhook contracts.
+
+- [Nefesh Ai Webhooks](https://apis.io/asyncapis/nefesh-ai/nefesh-ai-webhooks/)
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [Nefesh — Real-Time Human State Awareness for AI](https://apis.io/servers/nefesh-ai/nefesh/)
+
+#### JSON Schema (1)
+
+The data models the API reads and writes.
+
+- [Human State Protocol v1.0](https://apis.io/schemas/nefesh-ai/nefesh-ai-hsp-1.0.schema/)
+
+#### Security (3)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Nefesh Ai Authentication](https://apis.io/security/nefesh-ai/nefesh-ai-authentication/)
+- [Nefesh Ai Domain Security](https://apis.io/security/nefesh-ai/nefesh-ai-domain-security/)
+- [Nefesh Ai Vulnerability Disclosure](https://apis.io/security/nefesh-ai/nefesh-ai-vulnerability-disclosure/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Nefesh Ai Plans Pricing](https://apis.io/plans/nefesh-ai/nefesh-ai-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Nefesh Ai Rate Limits](https://apis.io/rate-limits/nefesh-ai/nefesh-ai-rate-limits/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://nefesh.ai/)
+- [Documentation](https://nefesh.ai/docs)
+- [Getting started](https://nefesh.ai/docs/quickstart)
+- [API reference](https://nefesh.ai/docs/api)
+- [Pricing](https://nefesh.ai/pricing)
+- [Sign up](https://nefesh.ai/signup)
+- [Security](https://nefesh.ai/.well-known/security.txt)
+- [Compliance](https://nefesh.ai/docs/regulatory)
+- [Terms of service](https://nefesh.ai/terms)
+- [Privacy policy](https://nefesh.ai/docs/privacy)
+- [GitHub](https://github.com/nefesh-ai)
+
+## API Evangelist rating
+
+**Kin Score 61.8** — strong · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 80.0 |
+| Contract quality | 46.0 |
+| Contract governance | 18.2 |
+| Operational transparency | 55.3 |
+| Developer ergonomics | 64.3 |
+| Access clarity | 84.2 |
+
+**Agent readiness 30.1** — agent-ready
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | documented (partial credit) |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | — |
+| Error Semantics | documented (partial credit) |
+| OpenAPI Examples | — |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | flavored (partial credit) |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | na |
+| Operation Distinctiveness | na |
+
+**Regulatory alignment 33.3** — Health
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/nefesh-ai/](https://apis.io/providers/nefesh-ai/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Nefesh AI: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/nefesh-ai/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
